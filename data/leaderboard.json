@@ -1,0 +1,12 @@
+[
+  { "name": "PlayerOne", "score": 56789, "avatarUrl": null, "borderColor": "#9d4edd" },
+  { "name": "RavenMaster", "score": 49821, "avatarUrl": null, "borderColor": "#1a1a2e" },
+  { "name": "SpikeFan", "score": 45112, "avatarUrl": null, "borderColor": "#52b788" },
+  { "name": "ColtPro", "score": 42050, "avatarUrl": null, "borderColor": "#0077b6" },
+  { "name": "LeonKing", "score": 39800, "avatarUrl": null, "borderColor": "#2d6a4f" },
+  { "name": "PiperSnipe", "score": 36540, "avatarUrl": null, "borderColor": "#e85d04" },
+  { "name": "FrankSmash", "score": 33120, "avatarUrl": null, "borderColor": "#6c757d" },
+  { "name": "BrawlGuru", "score": 29870, "avatarUrl": null, "borderColor": "#ffc107" },
+  { "name": "QuizNinja", "score": 27500, "avatarUrl": null, "borderColor": "#ff5252" },
+  { "name": "StarHunter", "score": 25100, "avatarUrl": null, "borderColor": "#4da3ff" }
+]
