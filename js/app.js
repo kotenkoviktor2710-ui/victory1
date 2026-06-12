@@ -1,1004 +1,984 @@
-import { YandexSDK } from "./yandex-sdk.js";
-import { launchResultsConfetti, stopConfetti } from "./confetti-fx.js";
-import { launchEmojiBurst, clearEmojiBurst } from "./emoji-burst-fx.js";
-import { bindUiClickSounds, initUiAudio, initAudioVisibilityHandler, tryStartBackgroundMusic } from "./ui-audio.js";
 import {
-  loadSettings,
-  getSettings,
-  setSetting,
-  subscribe,
-  areHintsEnabled,
-} from "./settings.js";
+  bindStoryFlowchartPan,
+  fitStoryFlowchartViewport,
+  getItemSearchItems,
+  isItemSearchLine,
+  renderEndScreen,
+  renderMainMenu,
+  patchNovelScreen,
+  renderNovelScreen,
+  showPathNotice,
+} from "./ui.js";
+import { YandexSDK } from "./yandex-sdk.js";
+import {
+  advance,
+  choose,
+  createNovelState,
+  getCheckpoint,
+  getChoicePresenterLayers,
+  getCurrentLine,
+  getCurrentScene,
+  getViewModel,
+  resumeStory,
+  returnToMenu,
+  startStory,
+} from "./novel-engine.js";
+import { playSoftWhiteFlash } from "./screen-effects.js";
+import { loadStory, resolveBackground } from "./story-loader.js";
+import {
+  getGlobalFlowchartProgress,
+  normalizeDiscovery,
+  recordDiscovery,
+  serializeDiscovery,
+} from "./story-flowchart.js";
+import {
+  clearStoryFlowchartLayoutCache,
+  getFlowchartLayoutDirection,
+  layoutStoryFlowchart,
+} from "./story-flowchart-layout.js";
+import { startAnomalyScan, stopAnomalyScan } from "./anomaly-scan.js";
+import { startMenuBgCycle, stopMenuBgCycle } from "./menu-bg-cycle.js";
+import { refreshSyncSilhouettes, stopSyncSilhouettes } from "./sync-silhouette.js";
+import "./viewport.js";
 
-const sdk = new YandexSDK();
+const SAVE_KEY = "novel_progress";
+const DISCOVERY_KEY = "story_discovery";
+const SETTINGS_KEY = "novel_settings";
+const DEFAULT_SETTINGS = { music: 70, sfx: 80 };
 
-const state = {
-  quiz: null,
-  roundQuestions: [],
-  currentIndex: 0,
-  score: 0,
-  coins: 0,
-  totalCorrect: 0,
-  bestScore: 0,
-  gamesPlayed: 0,
-  answered: false,
-  hintsUsed: { exclude: false, highlight: false, audience: false },
-  sessionCoinsEarned: 0,
-  currentMode: "easy",
-  modeTrophies: { easy: 0, medium: 0, hard: 0 },
-  unlockedEmojis: new Set(),
-  leaderboard: [],
-  leaderboardSelf: null,
-  completedRoundSnapshot: null,
-};
+const sdk = new YandexSDK({ leaderboardName: "score" });
 
-function getModeConfig(mode = state.currentMode) {
-  return state.quiz?.modes?.[mode] ?? null;
+const loader = document.getElementById("loader");
+const loaderText = loader?.querySelector(".loader__text");
+const app = document.getElementById("app");
+
+/** @type {import("./novel-engine.js").NovelState|null} */
+let novelState = null;
+/** @type {{ sceneId: string, lineIndex: number }|null} */
+let savedCheckpoint = null;
+/** @type {"settings"|"story"|null} */
+let menuOverlay = null;
+/** @type {{ visitedScenes: Set<string>, visitedChoices: Set<string> }} */
+let storyDiscovery = normalizeDiscovery(null);
+/** @type {import("./story-flowchart-layout.js").StoryFlowchartLayout|null} */
+let storyFlowchartLayout = null;
+/** @type {import("./story-flowchart-layout.js").FlowchartLayoutDirection|null} */
+let storyFlowchartLayoutDirection = null;
+/** @type {"menu"|"settings"|null} */
+let gameOverlay = null;
+/** @type {boolean} */
+let choicesVisible = false;
+/** @type {{ music: number, sfx: number }} */
+let settings = { ...DEFAULT_SETTINGS };
+/** @type {boolean} */
+let overlayClosing = false;
+/** @type {boolean} */
+let scanHelpOpen = false;
+let textAnimating = false;
+/** @type {Map<string, Set<string>>} */
+const searchFoundByKey = new Map();
+/** @type {Map<string, Set<string>>} */
+const searchRevealedByKey = new Map();
+
+const OVERLAY_LEAVE_MS = 300;
+const TEXTBOX_ANIM_MS = 260;
+
+let currentBgUrl = null;
+let currentBgKey = null;
+let activeBgLayer = "a";
+let previousCharacterLayers = [];
+
+const BG_CROSSFADE_MS = 600;
+
+async function bootstrap() {
+  await sdk.init();
+  setLoaderText("Загрузка сюжета…");
+
+  const story = await loadStory();
+  const saved = await sdk.loadData([SAVE_KEY, DISCOVERY_KEY, SETTINGS_KEY]);
+
+  novelState = createNovelState(story);
+  savedCheckpoint = normalizeCheckpoint(saved?.[SAVE_KEY], story);
+  storyDiscovery = normalizeDiscovery(saved?.[DISCOVERY_KEY]);
+  settings = normalizeSettings(saved?.[SETTINGS_KEY]);
+
+  if (savedCheckpoint) {
+    recordDiscovery(storyDiscovery, savedCheckpoint.sceneId, null);
+  }
+  render();
+  bindInput();
+  bindStoryFlowchartResize();
+  void ensureStoryFlowchartLayout();
+  sdk.ready();
+  loader?.remove();
 }
 
-function getModeLimit(mode) {
-  const cfg = getModeConfig(mode);
-  return cfg?.trophyMax ?? cfg?.poolSize ?? 10;
-}
-
-function getQuestionsPerRound(mode) {
-  return getModeConfig(mode)?.questionsPerRound ?? 10;
-}
-
-/** Режим считается пройденным при максимуме трофеев (см. trophyMax в quiz.json). */
-const MODE_UNLOCK_FROM = {
-  easy: null,
-  medium: "easy",
-  hard: "medium",
-};
-
-const MODE_LABELS = {
-  easy: "НАЧАЛЬНЫЙ",
-  medium: "СРЕДНИЙ",
-  hard: "СЛОЖНЫЙ",
-};
-
-const SHOP = {
-  emoji: 120,
-};
-
-const HINT_FLASH = {
-  highlight: 1000,
-  ad: 2000,
-  audience: 1800,
-};
-
-function createHintsUsedState() {
-  return { exclude: false, highlight: false, audience: false };
-}
-
-function getModeTrophyProgress(mode) {
-  const max = getModeLimit(mode);
-  const val = state.modeTrophies[mode] ?? 0;
-  return { val, max, completed: val >= max };
-}
-
-function isModeCompleted(mode) {
-  return getModeTrophyProgress(mode).completed;
-}
-
-function isModeUnlocked(mode) {
-  const requiredMode = MODE_UNLOCK_FROM[mode];
-  if (!requiredMode) return true;
-  return isModeCompleted(requiredMode);
-}
-
-function getModeUnlockRemaining(mode) {
-  const requiredMode = MODE_UNLOCK_FROM[mode];
-  if (!requiredMode) return 0;
-
-  const { val, max } = getModeTrophyProgress(requiredMode);
-  return Math.max(0, max - val);
-}
-
-function getModeUnlockLabel(mode) {
-  const requiredMode = MODE_UNLOCK_FROM[mode];
-  if (!requiredMode) return "";
-
-  const labels = { easy: "начальный", medium: "средний", hard: "сложный" };
-  return `Сначала пройди ${labels[requiredMode]}`;
-}
-
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => document.querySelectorAll(sel);
-
-const screens = {
-  menu: $("#screen-menu"),
-  mode: $("#screen-mode"),
-  rewards: $("#screen-rewards"),
-  stats: $("#screen-stats"),
-  game: $("#screen-game"),
-  results: $("#screen-results"),
-};
-
-function showScreen(name) {
-  const prev = document.querySelector(".screen.active")?.id;
-
-  Object.values(screens).forEach((el) => el.classList.remove("active"));
-  screens[name]?.classList.add("active");
-
-  if (prev === "screen-results" && name !== "results") {
-    stopConfetti();
+function ensureStoryFlowchartLayout() {
+  const direction = getFlowchartLayoutDirection();
+  if (storyFlowchartLayout && storyFlowchartLayoutDirection === direction) {
+    return Promise.resolve(storyFlowchartLayout);
   }
 
-  if (prev === "screen-game" && name !== "game") {
-    clearEmojiBurst();
-  }
-
-  if (name === "menu" || name === "mode" || name === "stats" || name === "rewards" || name === "results") {
-    sdk.gameplayStop();
-  } else if (name === "game") {
-    sdk.gameplayStart();
-  }
-
-  if (name === "stats") {
-    renderStatsSelfPin();
-  }
-}
-
-function getTotalTrophies() {
-  return Object.values(state.modeTrophies).reduce((sum, value) => sum + (Number(value) || 0), 0);
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function getNameInitial(name) {
-  const trimmed = String(name || "").trim();
-  if (!trimmed) return "?";
-  return [...trimmed][0].toUpperCase();
-}
-
-function getAvatarFallbackHue(name) {
-  let hash = 0;
-  const value = String(name || "player");
-  for (let i = 0; i < value.length; i += 1) {
-    hash = value.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash) % 360;
-}
-
-function renderStatsAvatar(entry) {
-  const borderStyle = entry.borderColor
-    ? ` style="border-color: ${escapeHtml(entry.borderColor)}"`
-    : "";
-  const safeName = escapeHtml(entry.name);
-
-  if (entry.avatarUrl) {
-    return `<img class="stats-avatar" src="${escapeHtml(entry.avatarUrl)}" alt="" loading="lazy" decoding="async"${borderStyle} />`;
-  }
-
-  const initial = escapeHtml(getNameInitial(entry.name));
-  const hue = getAvatarFallbackHue(entry.name);
-  const fallbackStyle = entry.borderColor
-    ? `border-color: ${escapeHtml(entry.borderColor)};`
-    : "";
-  return `<span class="stats-avatar stats-avatar--fallback" style="${fallbackStyle} background: hsl(${hue} 55% 38%);" aria-hidden="true">${initial}</span>`;
-}
-
-async function loadLeaderboard() {
-  const data = await sdk.loadLeaderboardEntries(10);
-  state.leaderboard = data.top;
-  state.leaderboardSelf = data.self;
-}
-
-function buildStatsRowHtml(entry, { self = false } = {}) {
-  const rank = entry.rank ?? 0;
-
-  return `
-    <span class="stats-rank ${getRankClass(rank)}">${rank}</span>
-    ${renderStatsAvatar(entry)}
-    <span class="stats-name">${escapeHtml(entry.name)}${self ? ' <span class="stats-name__you">(вы)</span>' : ""}</span>
-    <span class="stats-score-wrap">
-      <img class="trophy-icon stats-score-wrap__icon" src="assets/ui/kubok.png" alt="" width="24" height="24" />
-      <span class="stats-score">${entry.score}</span>
-    </span>
-  `.trim();
-}
-
-function renderStatsSelfPin() {
-  const pin = $("#stats-self-pin");
-  const row = $("#stats-self-row");
-  if (!pin || !row) return;
-
-  const self = state.leaderboardSelf;
-  if (!self || self.rank <= 10) {
-    pin.hidden = true;
-    row.innerHTML = "";
-    return;
-  }
-
-  pin.hidden = false;
-  row.className = "stats-row stats-row--self";
-  row.innerHTML = buildStatsRowHtml(self, { self: true });
-}
-
-function getRankClass(rank) {
-  if (rank === 1) return "stats-rank--1";
-  if (rank === 2) return "stats-rank--2";
-  if (rank === 3) return "stats-rank--3";
-  return "stats-rank--default";
-}
-
-function getEmojiCatalog() {
-  return state.quiz?.emojis ?? [];
-}
-
-function getUnlockedEmojiUrls() {
-  return getEmojiCatalog()
-    .filter((emoji) => state.unlockedEmojis.has(emoji.id))
-    .map((emoji) => emoji.url);
-}
-
-function tryUnlockEmoji(question) {
-  const emojiId = question?.rewards?.emojiId;
-  if (!emojiId || state.unlockedEmojis.has(emojiId)) return false;
-
-  state.unlockedEmojis.add(emojiId);
-  return true;
-}
-
-function canAfford(price) {
-  return state.coins >= price;
-}
-
-function spendCoins(amount) {
-  if (amount <= 0 || state.coins < amount) return false;
-  state.coins -= amount;
-  updateCoinsUI();
-  return true;
-}
-
-function syncGameplayWithActiveScreen() {
-  if (screens.game?.classList.contains("active")) {
-    sdk.gameplayStart();
-  } else {
-    sdk.gameplayStop();
-  }
-}
-
-function applyAppLanguage() {
-  const lang = sdk.getLanguage();
-  document.documentElement.lang = lang.split("-")[0] || "ru";
-}
-
-async function buyEmoji(emojiId) {
-  if (state.unlockedEmojis.has(emojiId)) return;
-  if (!canAfford(SHOP.emoji)) return;
-
-  await sdk.showFullscreenAdv({ resumeGameplay: false });
-  if (!spendCoins(SHOP.emoji)) return;
-
-  state.unlockedEmojis.add(emojiId);
-  await persistProgress();
-  renderRewardsGrid();
-}
-
-function renderRewardsGrid() {
-  const grid = $("#rewards-grid");
-  const countEl = $("#rewards-count");
-  if (!grid) return;
-
-  const catalog = getEmojiCatalog();
-  const total = catalog.length;
-  const affordEmoji = canAfford(SHOP.emoji);
-
-  if (countEl) {
-    countEl.textContent = `${state.unlockedEmojis.size}/${total}`;
-  }
-
-  grid.innerHTML = catalog
-    .map((emoji) => {
-      const unlocked = state.unlockedEmojis.has(emoji.id);
-      if (unlocked) {
-        return `
-          <div class="rewards-cell" title="Emoji #${emoji.id}">
-            <img class="rewards-cell__img" src="${emoji.url}" alt="" width="64" height="64" loading="lazy" />
-          </div>
-        `;
-      }
-
-      return `
-        <div class="rewards-cell rewards-cell--locked" title="Купить за ${SHOP.emoji} монет">
-          <img class="rewards-cell__img" src="${emoji.url}" alt="" width="64" height="64" loading="lazy" />
-          <button
-            type="button"
-            class="rewards-buy-btn"
-            data-emoji-id="${emoji.id}"
-            ${affordEmoji ? "" : "disabled"}
-            aria-label="Купить emoji за ${SHOP.emoji} монет"
-          >
-            <img class="rewards-buy-btn__icon" src="assets/ui/coin.png" alt="" width="16" height="16" />
-            <span>${SHOP.emoji}</span>
-          </button>
-        </div>
-      `;
+  return layoutStoryFlowchart()
+    .then((layout) => {
+      storyFlowchartLayout = layout;
+      storyFlowchartLayoutDirection = layout.direction;
+      if (menuOverlay === "story") render();
+      return layout;
     })
-    .join("");
+    .catch((error) => {
+      console.error("[flowchart] Не удалось построить карту сюжета:", error);
+      return null;
+    });
 }
 
-async function persistProgress() {
-  await sdk.saveProgress({
-    bestScore: state.bestScore,
-    coins: state.coins,
-    gamesPlayed: state.gamesPlayed,
-    totalCorrect: state.totalCorrect,
-    modeTrophies: state.modeTrophies,
-    unlockedEmojis: [...state.unlockedEmojis],
-  });
-}
-
-function renderStatsList() {
-  const list = $("#stats-list");
-  if (!list) return;
-
-  if (state.leaderboard.length === 0) {
-    list.innerHTML = `
-      <li class="stats-row stats-row--empty">
-        <span class="stats-name">Рейтинг пока пуст</span>
-      </li>
-    `;
-    renderStatsSelfPin();
-    return;
-  }
-
-  list.innerHTML = state.leaderboard
-    .map((entry, index) => {
-      const rank = entry.rank ?? index + 1;
-      return `
-        <li class="stats-row">
-          ${buildStatsRowHtml({ ...entry, rank })}
-        </li>
-      `;
-    })
-    .join("");
-
-  renderStatsSelfPin();
-}
-
-async function refreshStatsList() {
-  const list = $("#stats-list");
-  if (list) {
-    list.innerHTML = `
-      <li class="stats-row stats-row--empty">
-        <span class="stats-name">Загрузка...</span>
-      </li>
-    `;
-  }
-
-  $("#stats-self-pin")?.setAttribute("hidden", "");
-
-  const data = await sdk.loadLeaderboardEntries(10);
-  state.leaderboard = data.top;
-  state.leaderboardSelf = data.self;
-  renderStatsList();
-}
-
-function updateModeTrophiesUI() {
-  $$(".mode-card__trophy-value").forEach((el) => {
-    const mode = el.dataset.trophy;
-    const { val, max } = getModeTrophyProgress(mode);
-    el.textContent = `${val}/${max}`;
-  });
-
-  $$(".mode-card").forEach((card) => {
-    const mode = card.dataset.mode;
-    const unlocked = isModeUnlocked(mode);
-    card.classList.toggle("mode-card--locked", !unlocked);
-    card.disabled = !unlocked;
-    card.setAttribute("aria-disabled", unlocked ? "false" : "true");
-
-    const lock = card.querySelector(".mode-card__lock");
-    const lockValue = card.querySelector(".mode-card__lock-value");
-    const lockLabel = card.querySelector(".mode-card__lock-label");
-    if (!lock) return;
-
-    if (unlocked) {
-      lock.hidden = true;
-    } else {
-      lock.hidden = false;
-      if (lockValue) lockValue.textContent = String(getModeUnlockRemaining(mode));
-      if (lockLabel) lockLabel.textContent = getModeUnlockLabel(mode);
-    }
-  });
-}
-
-async function selectMode(mode) {
-  if (!isModeUnlocked(mode)) return;
-
-  await sdk.showFullscreenAdv({ resumeGameplay: false });
-
-  state.currentMode = mode;
-  startRound();
-}
-
-function applyGameSettings() {
-  const hintPanel = $("#hint-panel");
-  if (hintPanel) {
-    hintPanel.classList.toggle("hint-panel--ad-only", !areHintsEnabled());
-  }
-}
-
-function syncSettingsModal() {
-  const settings = getSettings();
-  const soundEl = $("#setting-sound");
-  const emojiOffEl = $("#setting-emoji-off");
-  const hintsOffEl = $("#setting-hints-off");
-
-  if (soundEl) soundEl.checked = settings.soundEnabled;
-  if (emojiOffEl) emojiOffEl.checked = !settings.emojiEffectsEnabled;
-  if (hintsOffEl) hintsOffEl.checked = !settings.hintsEnabled;
-}
-
-function openSettingsModal() {
-  syncSettingsModal();
-  openModal("modal-settings");
-}
-
-function bindSettingsControls() {
-  $("#setting-sound")?.addEventListener("change", (e) => {
-    setSetting("soundEnabled", e.target.checked);
-  });
-  $("#setting-emoji-off")?.addEventListener("change", (e) => {
-    setSetting("emojiEffectsEnabled", !e.target.checked);
-  });
-  $("#setting-hints-off")?.addEventListener("change", (e) => {
-    setSetting("hintsEnabled", !e.target.checked);
-  });
-}
-
-function openModal(id) {
-  $(`#${id}`)?.classList.add("open");
-  sdk.gameplayStop();
-}
-
-function closeModal(id) {
-  $(`#${id}`)?.classList.remove("open");
-  const activeScreen = document.querySelector(".screen.active");
-  if (activeScreen?.id === "screen-game") {
-    sdk.gameplayStart();
-  }
-}
-
-let confirmResolve = null;
-
-function finishConfirm(result) {
-  closeModal("modal-confirm");
-  if (confirmResolve) {
-    confirmResolve(result);
-    confirmResolve = null;
-  }
-}
-
-function showConfirm({ title = "Подтвердите действие", message = "", confirmText = "Да", cancelText = "Отмена" } = {}) {
-  return new Promise((resolve) => {
-    const titleEl = $("#modal-confirm-title");
-    const messageEl = $("#modal-confirm-message");
-    const btnConfirm = $("#modal-confirm-ok");
-    const btnCancel = $("#modal-confirm-cancel");
-
-    if (titleEl) titleEl.textContent = title;
-    if (messageEl) messageEl.textContent = message;
-    if (btnConfirm) btnConfirm.textContent = confirmText;
-    if (btnCancel) btnCancel.textContent = cancelText;
-
-    confirmResolve = resolve;
-    openModal("modal-confirm");
-  });
-}
-
-async function loadQuiz() {
-  const res = await fetch("data/quiz.json");
-  if (!res.ok) throw new Error("Не удалось загрузить вопросы");
-  state.quiz = await res.json();
-  if (!state.quiz?.questions) {
-    throw new Error("Некорректный формат data/quiz.json");
-  }
-}
-
-function getModeQuestionPool(mode = state.currentMode) {
-  return state.quiz?.questions?.[mode] ?? [];
-}
-
-function shuffle(array) {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function questionFingerprint(q) {
-  const options = (q.options ?? []).map((o) => String(o).trim().toLowerCase()).join("|");
-  return `${String(q.question).trim().toLowerCase()}::${options}`;
-}
-
-function uniqueQuestions(questions) {
-  const seen = new Set();
-  return questions.filter((q) => {
-    const key = questionFingerprint(q);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function shuffleOptions(question) {
-  const correctOriginal = question.correct_option_index;
-  const pairs = question.options.map((text, originalIndex) => ({
-    text,
-    originalIndex,
-  }));
-  const shuffled = shuffle(pairs);
-
+function normalizeCheckpoint(raw, story) {
+  if (!raw?.sceneId || !story?.scenes[raw.sceneId]) return null;
   return {
-    options: shuffled.map((item) => item.text),
-    correctIndex: shuffled.findIndex((item) => item.originalIndex === correctOriginal),
+    sceneId: raw.sceneId,
+    lineIndex: Math.max(0, Number(raw.lineIndex) || 0),
   };
 }
 
-function startRound() {
-  const mode = state.currentMode;
-  const pool = shuffle(uniqueQuestions(getModeQuestionPool(mode)));
-  const roundSize = getQuestionsPerRound(mode);
-  state.roundQuestions = pool.slice(0, Math.min(roundSize, pool.length));
-  state.currentIndex = 0;
-  state.score = 0;
-  state.answered = false;
-  state.hintsUsed = createHintsUsedState();
-  state.sessionCoinsEarned = 0;
-  showScreen("game");
-  updateGameModeBadge();
-  updateCoinsUI();
-  renderQuestion();
+function normalizeSettings(raw) {
+  if (!raw || typeof raw !== "object") return { ...DEFAULT_SETTINGS };
+  return {
+    music: clampPercent(raw.music, DEFAULT_SETTINGS.music),
+    sfx: clampPercent(raw.sfx, DEFAULT_SETTINGS.sfx),
+  };
 }
 
-function updateGameModeBadge() {
-  const badge = $("#game-mode-badge");
-  if (!badge) return;
-
-  const mode = state.currentMode;
-  badge.dataset.mode = mode;
-  badge.textContent = MODE_LABELS[mode] ?? mode.toUpperCase();
+function clampPercent(value, fallback) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.min(100, Math.max(0, Math.round(num)));
 }
 
-function renderQuestion() {
-  const q = state.roundQuestions[state.currentIndex];
-  if (!q) return;
+function setLoaderText(text) {
+  if (loaderText) loaderText.textContent = text;
+}
 
-  state.answered = false;
-  state.hintsUsed = createHintsUsedState();
-  state.questionDisplay = null;
+function bindStoryFlowchartResize() {
+  window.addEventListener("resize", () => {
+    if (menuOverlay !== "story") return;
 
-  $("#question-progress").textContent =
-    `ВОПРОС ${state.currentIndex + 1}/${state.roundQuestions.length}`;
-  $("#question-text").textContent = q.question;
+    const direction = getFlowchartLayoutDirection();
+    if (storyFlowchartLayout && storyFlowchartLayoutDirection !== direction) {
+      storyFlowchartLayout = null;
+      storyFlowchartLayoutDirection = null;
+      clearStoryFlowchartLayoutCache();
+      void ensureStoryFlowchartLayout();
+      return;
+    }
 
-  const container = $("#answers-container");
-  container.innerHTML = "";
-
-  const { options, correctIndex } = shuffleOptions(q);
-  state.questionDisplay = { correctIndex };
-
-  options.forEach((option, index) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-answer answer-btn";
-    btn.textContent = option;
-    btn.dataset.index = String(index);
-    btn.addEventListener("click", () => onAnswer(index));
-    container.appendChild(btn);
+    if (storyFlowchartLayout) {
+      fitStoryFlowchartViewport();
+      bindStoryFlowchartPan();
+    }
   });
-
-  updateHintButtons();
 }
 
-function getCorrectIndex() {
-  return (
-    state.questionDisplay?.correctIndex ??
-    state.roundQuestions[state.currentIndex]?.correct_option_index
-  );
-}
-
-function getCorrectButton() {
-  const correctIndex = getCorrectIndex();
-  if (correctIndex == null) return null;
-
-  return [...$$("#answers-container .answer-btn")].find(
-    (btn) => Number(btn.dataset.index) === correctIndex
-  );
-}
-
-function getVisibleWrongButtons() {
-  const correctIndex = getCorrectIndex();
-  return [...$$("#answers-container .answer-btn")].filter(
-    (btn) =>
-      !btn.classList.contains("hidden") && Number(btn.dataset.index) !== correctIndex
-  );
-}
-
-function flashAnswerClass(button, className, durationMs) {
-  if (!button || state.answered) return;
-
-  button.classList.add(className);
-  window.setTimeout(() => {
-    if (state.answered) return;
-    button.classList.remove(className);
-  }, durationMs);
-}
-
-function flashCorrectAnswer(durationMs) {
-  flashAnswerClass(getCorrectButton(), "btn-answer--correct", durationMs);
-}
-
-function hintExclude() {
-  if (!areHintsEnabled()) return;
-  if (state.answered || state.hintsUsed.exclude) return;
-
-  const wrongButtons = getVisibleWrongButtons();
-  if (!wrongButtons.length) return;
-
-  wrongButtons[Math.floor(Math.random() * wrongButtons.length)].classList.add("hidden");
-  state.hintsUsed.exclude = true;
-  updateHintButtons();
-}
-
-function hintHighlightCorrect() {
-  if (!areHintsEnabled()) return;
-  if (state.answered || state.hintsUsed.highlight) return;
-
-  flashCorrectAnswer(HINT_FLASH.highlight);
-  state.hintsUsed.highlight = true;
-  updateHintButtons();
-}
-
-function hintAudienceHelp() {
-  if (!areHintsEnabled()) return;
-  if (state.answered || state.hintsUsed.audience) return;
-
-  const correctButton = getCorrectButton();
-  if (!correctButton) return;
-
-  flashAnswerClass(correctButton, "btn-answer--correct", HINT_FLASH.audience);
-
-  const emojiUrls = getUnlockedEmojiUrls();
-  if (emojiUrls.length > 0) {
-    launchEmojiBurst(emojiUrls);
-  }
-
-  state.hintsUsed.audience = true;
-  updateHintButtons();
-}
-
-function useAdHint() {
-  if (state.answered) return;
-  flashCorrectAnswer(HINT_FLASH.ad);
-}
-
-function updateHintButtons() {
-  const answered = state.answered;
-
-  $("#btn-hint-exclude") &&
-    ($("#btn-hint-exclude").disabled = answered || state.hintsUsed.exclude);
-  $("#btn-hint-highlight") &&
-    ($("#btn-hint-highlight").disabled = answered || state.hintsUsed.highlight);
-  $("#btn-hint-audience") &&
-    ($("#btn-hint-audience").disabled = answered || state.hintsUsed.audience);
-  $("#btn-hint-ad") && ($("#btn-hint-ad").disabled = answered);
-}
-
-function onAnswer(selectedIndex) {
-  if (state.answered) return;
-  state.answered = true;
-
-  const q = state.roundQuestions[state.currentIndex];
-  const correctIndex = state.questionDisplay?.correctIndex ?? q.correct_option_index;
-  const buttons = $$("#answers-container .answer-btn");
-  const isCorrect = selectedIndex === correctIndex;
-
-  buttons.forEach((btn, i) => {
-    if (i === correctIndex) {
-      btn.classList.add("btn-answer--correct");
-    } else if (i === selectedIndex && !isCorrect) {
-      btn.classList.add("btn-answer--wrong");
+function bindInput() {
+  window.addEventListener("keydown", (event) => {
+    if (!novelState || novelState.phase !== "playing") return;
+    if (gameOverlay || choicesVisible) return;
+    if (event.code === "Space" || event.code === "Enter") {
+      event.preventDefault();
+      onAdvance();
     }
   });
 
-  if (isCorrect) {
-    const coins = q.rewards?.coins ?? getModeConfig()?.rewards?.coinsPerCorrect ?? 2;
-
-    state.score += 1;
-    state.coins += coins;
-    state.sessionCoinsEarned += coins;
-    state.totalCorrect += 1;
-    updateCoinsUI();
-    persistProgress();
-    if (tryUnlockEmoji(q)) {
-      persistProgress();
-    }
-
-    const emojiUrls = getUnlockedEmojiUrls();
-    if (emojiUrls.length > 0) {
-      launchEmojiBurst(emojiUrls);
-    }
-  }
-
-  setTimeout(() => {
-    state.currentIndex += 1;
-    if (state.currentIndex >= state.roundQuestions.length) {
-      finishRound();
-    } else {
-      renderQuestion();
-    }
-  }, 900);
+  window.addEventListener("yandex:pause", () => {
+    saveProgress();
+  });
 }
 
-async function finishRound() {
-  sdk.gameplayStop();
+function bindUiEvents() {
+  app.querySelector(".novel[data-action='advance']")?.addEventListener("click", (event) => {
+    if (event.target.closest("[data-stop-advance]")) return;
+    onAdvance();
+  });
 
-  const total = state.roundQuestions.length;
-  const prevBestScore = state.bestScore;
-  if (state.score > state.bestScore) {
-    state.bestScore = state.score;
+  app.querySelectorAll("[data-scan-item]").forEach((item) => {
+    item.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      startScanHold(item, event);
+    });
+
+    item.addEventListener("click", () => {
+      if (suppressScanClick) return;
+      handleScanItemClick(item);
+    });
+  });
+
+  app.querySelector(".scan-terminal[data-scan-complete]")?.addEventListener("click", () => {
+    if (!isCurrentSearchComplete()) return;
+    void onAdvance();
+  });
+
+  app.querySelectorAll("[data-action]").forEach((element) => {
+    if (element.dataset.action === "advance") return;
+    element.addEventListener("click", () => handleAction(element.dataset.action));
+  });
+
+  app.querySelectorAll("[data-flow-scene]").forEach((element) => {
+    element.addEventListener("click", () => {
+      jumpToDiscoveredScene(element.dataset.flowScene);
+    });
+  });
+
+  app.querySelectorAll("[data-choice]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!novelState) return;
+      const choiceId = btn.dataset.choice;
+      const result = choose(novelState, choiceId);
+      novelState = result.state;
+      trackStoryProgress(novelState, result.events, choiceId);
+      const pathNotice = result.events.find((event) => event.type === "path_notice")?.pathNotice ?? null;
+      choicesVisible = false;
+      saveProgress();
+      render();
+      showPathNotice(pathNotice);
+    });
+  });
+
+  app.querySelectorAll("[data-setting]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const key = input.dataset.setting;
+      if (!key) return;
+      settings[key] = clampPercent(input.value, settings[key] ?? 0);
+      const valueLabel = app.querySelector(`[data-setting-value="${key}"]`);
+      if (valueLabel) valueLabel.textContent = `${settings[key]}%`;
+      saveSettings();
+    });
+  });
+}
+
+function resetNovelBackgroundState() {
+  currentBgUrl = null;
+  currentBgKey = null;
+  activeBgLayer = "a";
+  previousCharacterLayers = [];
+}
+
+function normalizeCharacterLayers(layers) {
+  return (layers ?? []).map((layer) => ({
+    id: layer.id,
+    slot: layer.slot ?? "left",
+    dimmed: Boolean(layer.dimmed),
+  }));
+}
+
+function characterLayersEqual(a, b) {
+  if (a.length !== b.length) return false;
+
+  return a.every(
+    (layer, index) =>
+      layer.id === b[index].id &&
+      layer.slot === b[index].slot &&
+      layer.dimmed === b[index].dimmed,
+  );
+}
+
+function setupNovelCharacters(layers) {
+  const normalized = normalizeCharacterLayers(layers);
+  const stage = app.querySelector(".novel__stage");
+
+  if (!stage) {
+    previousCharacterLayers = normalized;
+    return;
   }
-  const mode = state.currentMode;
-  const modeCfg = getModeConfig(mode);
-  const modeMax = getModeLimit(mode);
-  const perfect = total > 0 && state.score === total;
 
-  if (perfect && modeCfg?.rewards?.bonusPerfectRound) {
-    state.coins += modeCfg.rewards.bonusPerfectRound;
-    state.sessionCoinsEarned += modeCfg.rewards.bonusPerfectRound;
-    updateCoinsUI();
+  if (characterLayersEqual(normalized, previousCharacterLayers)) {
+    return;
   }
 
-  const prevTrophies = state.modeTrophies[mode] ?? 0;
-  state.modeTrophies[mode] = Math.min(modeMax, prevTrophies + state.score);
-  updateModeTrophiesUI();
-  state.gamesPlayed += 1;
+  const prevIds = new Set(previousCharacterLayers.map((layer) => layer.id));
+  let enterIndex = 0;
 
-  state.completedRoundSnapshot = {
-    score: state.score,
-    sessionCoinsEarned: state.sessionCoinsEarned,
-    prevBestScore,
+  stage.querySelectorAll(".character[data-character-id]").forEach((element) => {
+    const id = element.dataset.characterId;
+    if (!id || prevIds.has(id)) return;
+
+    if (enterIndex > 0) {
+      element.style.animationDelay = `${enterIndex * 0.08}s`;
+    }
+
+    void element.offsetWidth;
+    element.classList.add("character--enter");
+    element.addEventListener(
+      "animationend",
+      (event) => {
+        if (event.target !== element) return;
+        if (!String(event.animationName).startsWith("character-enter")) return;
+        element.classList.remove("character--enter");
+        element.style.animationDelay = "";
+      },
+      { once: true },
+    );
+    enterIndex += 1;
+  });
+
+  previousCharacterLayers = normalized;
+}
+
+function escapeCssUrl(value) {
+  return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function applyNovelBgLayer(layer, url) {
+  if (!layer || !url) return;
+  layer.style.backgroundImage = `url('${escapeCssUrl(url)}')`;
+}
+
+function clearBgLayerState(layer) {
+  if (!layer) return;
+  layer.classList.remove("is-visible", "is-entering", "is-leaving");
+}
+
+function setupNovelBackground(nextUrl, backgroundKey, { animate = true } = {}) {
+  const stack = app.querySelector(".novel__bg-stack");
+  if (!stack || !nextUrl || !backgroundKey) return;
+
+  const layerA = stack.querySelector(".novel__bg--a");
+  const layerB = stack.querySelector(".novel__bg--b");
+  if (!layerA || !layerB) return;
+
+  const shouldAnimate = animate && currentBgKey && currentBgKey !== backgroundKey;
+
+  if (!shouldAnimate) {
+    const visible = activeBgLayer === "a" ? layerA : layerB;
+    const hidden = activeBgLayer === "a" ? layerB : layerA;
+
+    applyNovelBgLayer(visible, nextUrl);
+    clearBgLayerState(hidden);
+    hidden.style.backgroundImage = "";
+    visible.classList.add("is-visible");
+    currentBgKey = backgroundKey;
+    currentBgUrl = nextUrl;
+    return;
+  }
+
+  const outgoing = activeBgLayer === "a" ? layerA : layerB;
+  const incoming = activeBgLayer === "a" ? layerB : layerA;
+
+  applyNovelBgLayer(outgoing, currentBgUrl ?? nextUrl);
+  applyNovelBgLayer(incoming, nextUrl);
+
+  clearBgLayerState(outgoing);
+  clearBgLayerState(incoming);
+  outgoing.classList.add("is-visible");
+  incoming.classList.remove("is-visible");
+
+  void incoming.offsetWidth;
+
+  outgoing.classList.add("is-leaving");
+  incoming.classList.add("is-entering");
+
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    incoming.removeEventListener("animationend", onEnterEnd);
+    clearBgLayerState(outgoing);
+    outgoing.classList.remove("is-visible");
+    incoming.classList.remove("is-entering");
+    incoming.classList.add("is-visible");
   };
 
-  await persistProgress();
-  await sdk.setLeaderboardScore(getTotalTrophies());
+  const onEnterEnd = (event) => {
+    if (event.target !== incoming) return;
+    if (event.animationName !== "novel-bg-enter") return;
+    finish();
+  };
 
-  showResults(total);
-  scheduleReviewAfterRound(total);
+  incoming.addEventListener("animationend", onEnterEnd);
+  window.setTimeout(finish, BG_CROSSFADE_MS + 80);
+
+  activeBgLayer = activeBgLayer === "a" ? "b" : "a";
+  currentBgKey = backgroundKey;
+  currentBgUrl = nextUrl;
 }
 
-const REVIEW_DELAY_MS = 1500;
-
-function scheduleReviewAfterRound(total) {
-  const good = state.score >= Math.ceil(total / 2);
-  if (!good) return;
-
-  window.setTimeout(async () => {
-    if (!screens.results?.classList.contains("active")) return;
-    await sdk.tryRequestReview();
-  }, REVIEW_DELAY_MS);
+function canAnimateTextboxLeave() {
+  return Boolean(app.querySelector(".textbox__body")) && novelState?.phase === "playing" && !gameOverlay;
 }
 
-function revertCompletedRound() {
-  const snap = state.completedRoundSnapshot;
-  if (!snap) return;
+async function animateTextboxLeave() {
+  const body = app.querySelector(".textbox__body");
+  if (!body) return;
 
-  const mode = state.currentMode;
-  state.coins = Math.max(0, state.coins - snap.sessionCoinsEarned);
-  state.modeTrophies[mode] = Math.max(0, (state.modeTrophies[mode] ?? 0) - snap.score);
-  state.gamesPlayed = Math.max(0, state.gamesPlayed - 1);
-  state.totalCorrect = Math.max(0, state.totalCorrect - snap.score);
-  state.bestScore = snap.prevBestScore;
-  state.completedRoundSnapshot = null;
+  body.classList.add("textbox__body--leave");
 
-  updateModeTrophiesUI();
-  updateCoinsUI();
+  await new Promise((resolve) => {
+    let finished = false;
+
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      body.removeEventListener("animationend", onEnd);
+      resolve();
+    };
+
+    const onEnd = (event) => {
+      if (event.target !== body) return;
+      if (event.animationName !== "textbox-body-leave") return;
+      finish();
+    };
+
+    body.addEventListener("animationend", onEnd);
+    window.setTimeout(finish, TEXTBOX_ANIM_MS);
+  });
 }
 
-function restartSameRound() {
-  if (!state.roundQuestions.length) return;
-
-  state.currentIndex = 0;
-  state.score = 0;
-  state.answered = false;
-  state.hintsUsed = createHintsUsedState();
-  state.sessionCoinsEarned = 0;
-  stopConfetti();
-  showScreen("game");
-  renderQuestion();
-}
-
-async function leaveResultsWithAd(callback) {
-  await sdk.showFullscreenAdv({ resumeGameplay: false });
-  await callback();
-  syncGameplayWithActiveScreen();
-}
-
-async function restartRoundAfterRevert() {
-  revertCompletedRound();
-  await persistProgress();
-  await sdk.setLeaderboardScore(getTotalTrophies());
-  restartSameRound();
-}
-
-function showResults(total) {
-  const perfect = state.score === total;
-  const good = state.score >= Math.ceil(total / 2);
-
-  $("#results-title").textContent = perfect
-    ? "ИДЕАЛЬНО!"
-    : good
-      ? "ПРАВИЛЬНО!"
-      : "РАУНД ЗАВЕРШЁН";
-  $("#score-display").textContent = `${state.score}/${total}`;
-  $("#best-score-display").textContent = `${state.bestScore}/${total}`;
-  $("#session-coins").textContent = String(state.sessionCoinsEarned);
-  updateCoinsUI();
-
-  showScreen("results");
-  launchResultsConfetti();
-}
-
-function updateCoinsUI() {
-  const coinsText = String(state.coins);
-  $("#coins-display").textContent = coinsText;
-  $("#total-coins-menu").textContent = coinsText;
-
-  if (screens.rewards?.classList.contains("active")) {
-    renderRewardsGrid();
+function animateOverlayClose(overlay, onDone) {
+  if (!overlay) {
+    onDone();
+    return;
   }
-  if (screens.game?.classList.contains("active")) {
-    updateHintButtons();
+
+  overlayClosing = true;
+
+  const panel = overlay.querySelector(".panel");
+  const isDim = overlay.classList.contains("overlay--dim");
+  const isLeft = overlay.classList.contains("overlay--left");
+  const panelLeaveName = isDim
+    ? "panel-leave-center"
+    : isLeft
+      ? "panel-leave-left"
+      : "panel-leave-right";
+  let finished = false;
+
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    panel?.removeEventListener("animationend", onPanelAnimEnd);
+    overlayClosing = false;
+    onDone();
+  };
+
+  const onPanelAnimEnd = (event) => {
+    if (event.target !== panel) return;
+    if (event.animationName !== panelLeaveName) return;
+    finish();
+  };
+
+  panel?.addEventListener("animationend", onPanelAnimEnd);
+  requestAnimationFrame(() => {
+    overlay.classList.add("is-leaving");
+  });
+  window.setTimeout(finish, OVERLAY_LEAVE_MS);
+}
+
+function closeMenuOverlay() {
+  if (overlayClosing || !menuOverlay) return;
+
+  const overlay = app.querySelector(".main-menu .overlay");
+  animateOverlayClose(overlay, () => {
+    menuOverlay = null;
+    render();
+  });
+}
+
+function closeGameOverlay({ resumeGameplay = true } = {}) {
+  if (overlayClosing || !gameOverlay) return;
+
+  const overlay = app.querySelector(".novel .overlay");
+  animateOverlayClose(overlay, () => {
+    gameOverlay = null;
+    if (resumeGameplay && novelState?.phase === "playing") {
+      sdk.gameplayStart();
+    }
+    render();
+  });
+}
+
+function closeScanHelpOverlay() {
+  if (overlayClosing || !scanHelpOpen) return;
+
+  const overlay = app.querySelector(".novel .overlay");
+  animateOverlayClose(overlay, () => {
+    scanHelpOpen = false;
+    render();
+  });
+}
+
+function getSearchKey(vm = novelState ? getViewModel(novelState) : null) {
+  if (!vm || !isItemSearchLine(vm.line)) return null;
+  return `${vm.sceneId}:${vm.lineIndex}`;
+}
+
+function getSearchFoundSet(key) {
+  if (!searchFoundByKey.has(key)) {
+    searchFoundByKey.set(key, new Set());
+  }
+
+  return searchFoundByKey.get(key);
+}
+
+function getSearchRevealedSet(key) {
+  if (!searchRevealedByKey.has(key)) {
+    searchRevealedByKey.set(key, new Set());
+  }
+
+  return searchRevealedByKey.get(key);
+}
+
+function getCurrentSearchState(vm = novelState ? getViewModel(novelState) : null) {
+  const key = getSearchKey(vm);
+  if (!key) return null;
+  return {
+    foundIds: Array.from(getSearchFoundSet(key)),
+    revealedIds: Array.from(getSearchRevealedSet(key)),
+  };
+}
+
+function isCurrentSearchComplete(vm = novelState ? getViewModel(novelState) : null) {
+  const key = getSearchKey(vm);
+  if (!key) return true;
+
+  const items = getItemSearchItems(vm.line);
+  const found = getSearchFoundSet(key);
+  return items.length > 0 && items.every((item) => found.has(item.id));
+}
+
+const SEARCH_COMPLETE_ADVANCE_MS = 420;
+const SCAN_HOLD_MS = 680;
+
+/** @type {{ zoneEl: HTMLElement, pointerId: number, raf: number, onEnd: (event: PointerEvent) => void } | null} */
+let scanHoldState = null;
+let suppressScanClick = false;
+
+function cancelScanHold() {
+  if (!scanHoldState) return;
+
+  window.removeEventListener("pointerup", scanHoldState.onEnd);
+  window.removeEventListener("pointercancel", scanHoldState.onEnd);
+  window.cancelAnimationFrame(scanHoldState.raf);
+
+  scanHoldState.zoneEl.classList.remove("scan-zone--charging");
+  scanHoldState.zoneEl.style.removeProperty("--scan-charge");
+  scanHoldState = null;
+}
+
+function canStartScanHold(zoneEl) {
+  const itemId = zoneEl?.dataset?.scanItem;
+  if (!itemId || !novelState || gameOverlay || scanHelpOpen || textAnimating) return false;
+  if (!zoneEl.classList.contains("scan-zone--revealed")) return false;
+  if (zoneEl.classList.contains("scan-zone--locked")) return false;
+
+  const vm = getViewModel(novelState);
+  const key = getSearchKey(vm);
+  if (!key) return false;
+
+  const found = getSearchFoundSet(key);
+  return !found.has(itemId);
+}
+
+function lockScanItem(zoneEl) {
+  const itemId = zoneEl?.dataset?.scanItem;
+  if (!itemId || !novelState) return;
+
+  const vm = getViewModel(novelState);
+  const key = getSearchKey(vm);
+  if (!key) return;
+
+  const items = getItemSearchItems(vm.line);
+  if (!items.some((item) => item.id === itemId)) return;
+
+  const found = getSearchFoundSet(key);
+  if (found.has(itemId)) return;
+
+  found.add(itemId);
+  getSearchRevealedSet(key).add(itemId);
+  render();
+
+  if (isCurrentSearchComplete(vm)) {
+    window.setTimeout(() => void onAdvance(), SEARCH_COMPLETE_ADVANCE_MS);
   }
 }
 
-function bindPlatformUiHandlers() {
-  window.addEventListener("yandex:resume", () => {
-    syncGameplayWithActiveScreen();
-  });
+/**
+ * @param {HTMLElement} zoneEl
+ * @param {PointerEvent} event
+ */
+function startScanHold(zoneEl, event) {
+  if (!canStartScanHold(zoneEl)) return;
 
-  $("#app")?.addEventListener("contextmenu", (e) => {
-    e.preventDefault();
-  });
+  cancelScanHold();
+  event.preventDefault();
+
+  const start = performance.now();
+  zoneEl.classList.add("scan-zone--charging");
+  zoneEl.style.setProperty("--scan-charge", "0");
+  zoneEl.setPointerCapture?.(event.pointerId);
+
+  const onEnd = (endEvent) => {
+    if (!scanHoldState || endEvent.pointerId !== scanHoldState.pointerId) return;
+    cancelScanHold();
+  };
+
+  const tick = (now) => {
+    if (!scanHoldState || scanHoldState.zoneEl !== zoneEl) return;
+
+    const progress = Math.min(1, (now - start) / SCAN_HOLD_MS);
+    zoneEl.style.setProperty("--scan-charge", String(progress));
+
+    if (progress >= 1) {
+      cancelScanHold();
+      suppressScanClick = true;
+      zoneEl.classList.add("scan-zone--hit");
+      window.setTimeout(() => zoneEl.classList.remove("scan-zone--hit"), 420);
+      lockScanItem(zoneEl);
+      window.setTimeout(() => {
+        suppressScanClick = false;
+      }, 0);
+      return;
+    }
+
+    scanHoldState.raf = window.requestAnimationFrame(tick);
+  };
+
+  scanHoldState = {
+    zoneEl,
+    pointerId: event.pointerId,
+    raf: window.requestAnimationFrame(tick),
+    onEnd,
+  };
+
+  window.addEventListener("pointerup", onEnd);
+  window.addEventListener("pointercancel", onEnd);
 }
 
-function bindEvents() {
-  bindPlatformUiHandlers();
-  bindUiClickSounds($("#app"));
+function handleScanItemClick(zoneEl) {
+  const itemId = zoneEl?.dataset?.scanItem;
+  if (!itemId || !novelState || gameOverlay || textAnimating) return;
 
-  $("#btn-play").addEventListener("click", startRound);
-  $("#btn-play-again").addEventListener("click", () => {
-    leaveResultsWithAd(async () => {
-      state.completedRoundSnapshot = null;
-      startRound();
-    });
-  });
-  $("#btn-restart-round")?.addEventListener("click", () => {
-    leaveResultsWithAd(restartRoundAfterRevert);
-  });
-  $("#btn-main-menu").addEventListener("click", () => {
-    leaveResultsWithAd(async () => {
-      showScreen("menu");
-      updateCoinsUI();
-    });
-  });
-  $("#btn-back").addEventListener("click", async () => {
-    const ok = await showConfirm({
-      title: "Выйти из раунда?",
-      message: "Прогресс не сохранится.",
-      confirmText: "Выйти",
-      cancelText: "Отмена",
-    });
-    if (ok) showScreen("menu");
-  });
-  $("#btn-mode").addEventListener("click", () => {
-    updateModeTrophiesUI();
-    showScreen("mode");
-  });
-  $("#btn-mode-back").addEventListener("click", () => showScreen("menu"));
-  $$(".mode-card").forEach((card) => {
-    card.addEventListener("click", () => selectMode(card.dataset.mode));
-  });
-  $("#btn-rewards").addEventListener("click", () => {
-    updateCoinsUI();
-    renderRewardsGrid();
-    showScreen("rewards");
-  });
-  $("#btn-rewards-back").addEventListener("click", () => showScreen("menu"));
-  $("#rewards-grid")?.addEventListener("click", (e) => {
-    const btn = e.target.closest(".rewards-buy-btn");
-    if (!btn || btn.disabled) return;
-    buyEmoji(Number(btn.dataset.emojiId));
-  });
-  $("#btn-stats").addEventListener("click", async () => {
-    showScreen("stats");
-    await refreshStatsList();
-  });
-  $("#btn-stats-back").addEventListener("click", () => showScreen("menu"));
-  bindSettingsControls();
-  subscribe(applyGameSettings);
-  $("#btn-settings").addEventListener("click", openSettingsModal);
-  $("#btn-info").addEventListener("click", () => openModal("modal-info"));
+  const vm = getViewModel(novelState);
+  const key = getSearchKey(vm);
+  if (!key) return;
 
-  $$("[data-close-modal]").forEach((btn) => {
-    btn.addEventListener("click", () => closeModal(btn.dataset.closeModal));
-  });
+  const found = getSearchFoundSet(key);
+  const isLocked = zoneEl.classList.contains("scan-zone--locked");
 
-  $("#modal-confirm-ok")?.addEventListener("click", () => finishConfirm(true));
-  $("#modal-confirm-cancel")?.addEventListener("click", () => finishConfirm(false));
-
-  $$(".modal-overlay:not(#modal-confirm)").forEach((overlay) => {
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) {
-        closeModal(overlay.id);
-      }
-    });
-  });
-
-  $("#modal-confirm")?.addEventListener("click", (e) => {
-    if (e.target === e.currentTarget) finishConfirm(false);
-  });
-
-  $("#btn-hint-exclude")?.addEventListener("click", hintExclude);
-  $("#btn-hint-highlight")?.addEventListener("click", hintHighlightCorrect);
-  $("#btn-hint-audience")?.addEventListener("click", hintAudienceHelp);
-  $("#btn-hint-ad")?.addEventListener("click", () => {
-    sdk.showRewardedVideo(() => useAdHint(), { resumeGameplay: true });
-  });
+  if (found.has(itemId) || isLocked) {
+    if (isCurrentSearchComplete(vm)) {
+      void onAdvance();
+    }
+  }
 }
 
-async function init() {
-  loadSettings();
-  applyGameSettings();
-  initAudioVisibilityHandler();
-  bindEvents();
+function jumpToDiscoveredScene(sceneId) {
+  if (!novelState || !sceneId || !novelState.story.scenes[sceneId]) return;
+
+  stopAnomalyScan();
+  menuOverlay = null;
+  gameOverlay = null;
+  choicesVisible = false;
+
+  const checkpoint = { sceneId, lineIndex: 0 };
+  novelState = resumeStory(novelState, checkpoint);
+  savedCheckpoint = checkpoint;
+  recordDiscovery(storyDiscovery, sceneId, null);
+  trackStoryProgress(novelState, [], null);
+  sdk.gameplayStart();
+  saveProgress();
+  render();
+}
+
+function handleAction(action) {
+  if (overlayClosing && action !== "exit") return;
+
+  switch (action) {
+    case "new-game":
+      stopAnomalyScan();
+      menuOverlay = null;
+      gameOverlay = null;
+      choicesVisible = false;
+      storyDiscovery = normalizeDiscovery(null);
+      novelState = startStory(novelState);
+      trackStoryProgress(novelState, [], null);
+      sdk.gameplayStart();
+      saveProgress();
+      render();
+      break;
+    case "continue":
+      if (!savedCheckpoint || !novelState) return;
+      stopAnomalyScan();
+      menuOverlay = null;
+      gameOverlay = null;
+      choicesVisible = false;
+      novelState = resumeStory(novelState, savedCheckpoint);
+      trackStoryProgress(novelState, [], null);
+      sdk.gameplayStart();
+      render();
+      break;
+    case "story":
+      menuOverlay = "story";
+      render();
+      void ensureStoryFlowchartLayout();
+      break;
+    case "settings":
+    case "settings-quick":
+      menuOverlay = "settings";
+      render();
+      break;
+    case "game-menu":
+      gameOverlay = "menu";
+      sdk.gameplayStop();
+      render();
+      break;
+    case "game-settings":
+      gameOverlay = "settings";
+      sdk.gameplayStop();
+      render();
+      break;
+    case "close-overlay":
+      closeMenuOverlay();
+      break;
+    case "close-game-overlay":
+      closeGameOverlay();
+      break;
+    case "open-scan-help":
+      scanHelpOpen = true;
+      render();
+      break;
+    case "close-scan-help":
+      closeScanHelpOverlay();
+      break;
+    case "exit":
+      sdk.gameplayStop();
+      menuOverlay = null;
+      gameOverlay = null;
+      choicesVisible = false;
+      if (novelState) novelState = returnToMenu(novelState);
+      render();
+      break;
+    default:
+      break;
+  }
+}
+
+async function onAdvance() {
+  if (!novelState || gameOverlay || textAnimating) return;
+  if (!isCurrentSearchComplete()) return;
+
+  textAnimating = true;
 
   try {
-    await initUiAudio();
-    await sdk.init();
-    applyAppLanguage();
-    await loadQuiz();
-    await loadLeaderboard();
+    if (
+      novelState.phase === "playing" &&
+      !getViewModel(novelState).line &&
+      getCurrentSceneSafe()?.actBreak?.enabled &&
+      !getCurrentSceneSafe()?.lines?.length
+    ) {
+      if (canAnimateTextboxLeave()) {
+        await animateTextboxLeave();
+      }
 
-    const progress = await sdk.loadProgress();
-    state.bestScore = progress.bestScore;
-    state.coins = progress.coins;
-    state.gamesPlayed = progress.gamesPlayed;
-    state.totalCorrect = progress.totalCorrect ?? 0;
-    if (progress.modeTrophies) {
-      state.modeTrophies = { ...state.modeTrophies, ...progress.modeTrophies };
+      novelState = { ...novelState, phase: "act_break" };
+      choicesVisible = false;
+      render();
+      return;
     }
-    if (Array.isArray(progress.unlockedEmojis)) {
-      state.unlockedEmojis = new Set(progress.unlockedEmojis.map(Number));
-    }
-    updateCoinsUI();
-    updateModeTrophiesUI();
 
-    sdk.ready();
-    await sdk.showFullscreenAdv({ resumeGameplay: false });
-    showScreen("menu");
-    tryStartBackgroundMusic();
-  } catch (err) {
-    console.error(err);
-    $("#loader p").textContent = "Ошибка загрузки. Обновите страницу.";
-    showScreen("menu");
+    const result = advance(novelState);
+    const hasChoices = result.events.some((event) => event.type === "choices");
+
+    if (canAnimateTextboxLeave() && !hasChoices) {
+      await animateTextboxLeave();
+    }
+
+    if (hasChoices) {
+      choicesVisible = true;
+      render();
+      return;
+    }
+
+    novelState = result.state;
+    choicesVisible = false;
+    trackStoryProgress(novelState, result.events, null);
+
+    const nextLine = getCurrentLine(novelState);
+    if (nextLine?.effect === "white_flash") {
+      const novelEl = app.querySelector(".novel");
+      if (novelEl) {
+        await playSoftWhiteFlash(novelEl);
+      }
+    }
+
+    if (novelState.phase === "playing") {
+      sdk.gameplayStart();
+    } else if (novelState.phase === "ended") {
+      sdk.gameplayStop();
+    }
+
+    saveProgress();
+    render();
   } finally {
-    $("#loader").classList.add("hidden");
+    textAnimating = false;
   }
 }
 
-init();
+async function saveProgress() {
+  if (!novelState) return;
+  const checkpoint = getCheckpoint(novelState);
+  const payload = { [DISCOVERY_KEY]: serializeDiscovery(storyDiscovery) };
+
+  if (checkpoint) {
+    savedCheckpoint = checkpoint;
+    payload[SAVE_KEY] = checkpoint;
+  }
+
+  await sdk.saveData(payload);
+}
+
+/**
+ * @param {import("./novel-engine.js").NovelState} state
+ * @param {Array<{ type: string, sceneId?: string }>} events
+ * @param {string|null|undefined} choiceId
+ */
+function trackStoryProgress(state, events, choiceId) {
+  if (state.phase === "playing" || state.phase === "act_break") {
+    recordDiscovery(storyDiscovery, state.sceneId, choiceId ?? null);
+  }
+
+  for (const event of events) {
+    if (event.type === "scene_change" && event.sceneId) {
+      recordDiscovery(storyDiscovery, event.sceneId, null);
+    }
+  }
+}
+
+async function saveSettings() {
+  await sdk.saveData({ [SETTINGS_KEY]: settings });
+}
+
+function getCurrentSceneSafe() {
+  return novelState ? getCurrentScene(novelState) : null;
+}
+
+function getCurrentStoryTitle() {
+  if (!novelState) return "Меню";
+
+  if (novelState.phase === "playing" || novelState.phase === "act_break") {
+    const scene = getCurrentScene(novelState);
+    const title = scene?.title?.trim() || scene?.actBreak?.title?.trim();
+    if (title) return formatStoryTitle(title);
+  }
+
+  if (savedCheckpoint) {
+    const scene = novelState.story.scenes[savedCheckpoint.sceneId];
+    const title = scene?.title?.trim();
+    if (title) return formatStoryTitle(title);
+  }
+
+  return "Пролог";
+}
+
+function formatStoryTitle(title) {
+  const cleaned = title.replace(/^(?:Ветка [A-Z]\d?|Скрытая S\d|S\d)\s*[—–-]\s*/iu, "").trim();
+  if (!cleaned) return title;
+  const lower = cleaned.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+function getGameProgress() {
+  const flow = getGlobalFlowchartProgress(storyDiscovery);
+
+  return {
+    total: flow.total,
+    discovered: flow.discovered,
+    percent: flow.percent,
+    currentTitle: getCurrentStoryTitle(),
+  };
+}
+
+function render() {
+  cancelScanHold();
+  if (!novelState) return;
+
+  const vm = getViewModel(novelState);
+  const showActBreak =
+    vm.phase === "act_break" ||
+    (vm.phase === "playing" && !vm.line && vm.scene?.actBreak?.enabled && !vm.scene?.lines?.length);
+
+  if (vm.phase === "menu") {
+    stopAnomalyScan();
+    stopSyncSilhouettes();
+    stopMenuBgCycle();
+    resetNovelBackgroundState();
+    app.innerHTML = renderMainMenu({
+      hasSave: Boolean(savedCheckpoint),
+      menuOverlay,
+      discovery: storyDiscovery,
+      storyFlowchartLayout,
+      settings,
+    });
+    bindUiEvents();
+    if (menuOverlay === "story" && storyFlowchartLayout) {
+      requestAnimationFrame(() => {
+        fitStoryFlowchartViewport();
+        bindStoryFlowchartPan();
+      });
+    }
+    startMenuBgCycle(app.querySelector(".main-menu"));
+    return;
+  }
+
+  stopMenuBgCycle();
+
+  if (vm.phase === "ended") {
+    stopAnomalyScan();
+    stopSyncSilhouettes();
+    resetNovelBackgroundState();
+    app.innerHTML = renderEndScreen();
+    bindUiEvents();
+    return;
+  }
+
+  const bgUrl = resolveBackground(novelState.story, vm.backgroundKey);
+  const novelOptions = {
+    story: novelState.story,
+    vm,
+    showActBreak,
+    showChoices: choicesVisible && vm.choices.length > 0,
+    gameOverlay,
+    settings,
+    progress: getGameProgress(),
+    searchState: getCurrentSearchState(vm),
+    scanHelpOpen: isItemSearchLine(vm.line) && scanHelpOpen,
+  };
+
+  const existingNovel = app.querySelector(".novel");
+  if (existingNovel && (vm.phase === "playing" || vm.phase === "act_break")) {
+    patchNovelScreen(existingNovel, novelOptions);
+  } else {
+    app.innerHTML = renderNovelScreen(novelOptions);
+  }
+
+  bindUiEvents();
+  setupNovelBackground(bgUrl, vm.backgroundKey);
+  const showChoices = choicesVisible && vm.choices.length > 0;
+  setupNovelCharacters(showChoices ? getChoicePresenterLayers() : vm.characterLayers);
+  refreshSyncSilhouettes(app);
+
+  const novelEl = app.querySelector(".novel");
+  const scanSceneKey = getSearchKey(vm);
+  if (!isItemSearchLine(vm.line)) {
+    scanHelpOpen = false;
+  }
+  if (isItemSearchLine(vm.line)) {
+    startAnomalyScan(novelEl, scanSceneKey, (itemId) => {
+      const revealKey = getSearchKey(vm);
+      if (revealKey) getSearchRevealedSet(revealKey).add(itemId);
+    });
+  } else {
+    stopAnomalyScan();
+  }
+}
+
+bootstrap().catch((err) => {
+  console.error(err);
+  setLoaderText("Ошибка загрузки. Обновите страницу.");
+});

@@ -1,0 +1,253 @@
+{
+  "scenes": {
+    "scene_b1_address": {
+      "id": "scene_b1_address",
+      "title": "Ветка B — Адрес, которого нет — 13:10",
+      "backgroundKey": "BG_04",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Склад доставки.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Тут адрес без здания.",
+          "thought": false,
+          "speaker": "char_irina"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Пустырь?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Нет. Координаты ведут в серверную «Синхрона».",
+          "thought": false,
+          "speaker": "char_irina"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Доставка прямо в сердце искусственного интеллекта. Премиум-заказ.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Артём, это не смешно.",
+          "thought": false,
+          "speaker": "char_irina"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Я смеюсь, потому что иначе начну кричать.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Поиск предметов B1 — Складская проверка:\n1. Старая накладная.\n2. Метка «нулевой маршрут».\n3. Повреждённый сканер.\n4. Фото другого курьера.\n5. Пломба «Синхрон».\n6. Служебный ключ.\n7. Записка «Не вскрывать».\n8. Карта входа в серверную.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_b2_inside"
+    },
+    "scene_b2_inside": {
+      "id": "scene_b2_inside",
+      "title": "Внутри посылки — 18:05",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём, Макс и Лера открывают коробку. Внутри модуль памяти и карточка.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Если ты читаешь это снова, значит, я не успел.\nНулевой курьер.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Я предлагаю закрыть коробку и сделать вид, что мы ничего не видели.",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Поздно. Коробка уже сделала вид, что видела нас.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Это модуль отката.",
+          "thought": false,
+          "speaker": "char_lera"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Переведи с языка людей, которые любят сложные слова.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Он может сохранить память одного цикла и передать её в следующий.",
+          "thought": false,
+          "speaker": "char_lera"
+        }
+      ],
+      "choices": [
+        {
+          "id": "b2_server",
+          "text": "Отнести модуль в серверную",
+          "nextSceneId": "scene_b_final"
+        },
+        {
+          "id": "b2_hide",
+          "text": "Спрятать модуль",
+          "nextSceneId": "scene_b_hide"
+        },
+        {
+          "id": "b2_orlova",
+          "text": "Передать модуль Орловой",
+          "nextSceneId": "scene_b_orlova"
+        },
+        {
+          "id": "b2_destroy",
+          "text": "Уничтожить модуль",
+          "nextSceneId": "scene_b_destroy"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    },
+    "scene_b_hide": {
+      "id": "scene_b_hide",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Модуль спрятан. Шанс открыть S2 растёт.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_b_final"
+    },
+    "scene_b_orlova": {
+      "id": "scene_b_orlova",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Орлова получает модуль как вещдок.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_b_final"
+    },
+    "scene_b_destroy": {
+      "id": "scene_b_destroy",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Модуль уничтожен. Путь к настоящему финалу заблокирован до нового цикла.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_hub"
+    },
+    "scene_b_final": {
+      "id": "scene_b_final",
+      "title": "Финал B — Доставка завершена — 19:40",
+      "backgroundKey": "BG_13",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Серверная. Артём вставляет модуль в терминал.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Курьер 00 — потерян\nКурьер 01 — потерян\nКурьер 02 — потерян\nКурьер 03 — активен: Артём Воронов",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Я не первый.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Нет.",
+          "thought": false,
+          "speaker": "char_lera"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Почему ты не сказала?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Потому что я надеялась, что система ошибается.",
+          "thought": false,
+          "speaker": "char_lera"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Доставка принята. Данные сохранены. Повтор запущен.",
+          "thought": false,
+          "speaker": "char_sync"
+        },
+        {
+          "kind": "narration",
+          "text": "На экране телефона — новое уведомление. Короткая запись. Курьер без номера.",
+          "thought": false
+        }
+      ],
+      "choices": [
+        {
+          "id": "b_to_s2",
+          "text": "Смотреть видео Нулевого курьера",
+          "nextSceneId": "scene_s2_video"
+        },
+        {
+          "id": "b_to_hub",
+          "text": "Вернуться к выбору ветки",
+          "nextSceneId": "scene_ch04_hub"
+        },
+        {
+          "id": "b_to_e",
+          "text": "Идти к настоящему финалу",
+          "nextSceneId": "scene_e1_council"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    }
+  }
+}

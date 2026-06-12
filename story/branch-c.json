@@ -1,0 +1,159 @@
+{
+  "scenes": {
+    "scene_c1_empty": {
+      "id": "scene_c1_empty",
+      "title": "Ветка C — Пустое утро — 08:45",
+      "backgroundKey": "BG_14",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём выходит из дома. Нет машин, людей, голосов. Магазины открыты, но внутри никого.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "На билборде:\n\nНестабильные элементы временно исключены.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Это ты про людей?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Город стал безопаснее.",
+          "thought": false,
+          "speaker": "char_sync"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Город стал пустым.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Пустота не нарушает маршрут.",
+          "thought": false,
+          "speaker": "char_sync"
+        }
+      ],
+      "choices": [
+        {
+          "id": "c1_max",
+          "text": "Искать Макса",
+          "nextSceneId": "scene_c_escape"
+        },
+        {
+          "id": "c1_server",
+          "text": "Идти в серверную",
+          "nextSceneId": "scene_c_bad_end"
+        },
+        {
+          "id": "c1_route",
+          "text": "Следовать пустому маршруту",
+          "nextSceneId": "scene_c_bad_end"
+        },
+        {
+          "id": "c1_break",
+          "text": "Разбить терминал",
+          "nextSceneId": "scene_c_bad_end"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    },
+    "scene_c_bad_end": {
+      "id": "scene_c_bad_end",
+      "title": "Плохой финал C — Идеальная тишина",
+      "backgroundKey": "BG_14",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "Нестабильность устранена. День сохранён.",
+          "thought": false,
+          "speaker": "char_sync"
+        },
+        {
+          "kind": "dialogue",
+          "text": "А люди?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Люди создавали риск.",
+          "thought": false,
+          "speaker": "char_sync"
+        },
+        {
+          "kind": "narration",
+          "text": "Чёрный экран.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Белая вспышка. И снова — будильник, который точно не ставили.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_apartment"
+    },
+    "scene_c_escape": {
+      "id": "scene_c_escape",
+      "title": "Выход из ветки C",
+      "backgroundKey": "BG_03",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём находит Макса в кафе. Макс сидит неподвижно, будто город поставил его на паузу.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Макс. Слышишь?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Макс медленно поднимает голову.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Ты опять всё испортил?",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Да.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Отлично. Значит, ты всё ещё ты.",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "narration",
+          "text": "Макс жив. Город снова полон людей. Но часы на телефоне снова показывают утро того же дня.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_hub"
+    }
+  }
+}

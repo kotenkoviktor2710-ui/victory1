@@ -1,14 +1,10 @@
 /**
- * Обёртка Yandex Games SDK с fallback для локальной разработки.
+ * Обёртка YaGames SDK с fallback для локальной разработки.
  */
-import { pauseBackgroundMusic, resumeBackgroundMusic } from "./ui-audio.js";
 function isLocalDev() {
   const host = location.hostname;
   return host === "localhost" || host === "127.0.0.1";
 }
-
-/** Техническое имя лидерборда в консоли Яндекс Игр */
-export const LEADERBOARD_NAME = "trophy_rank";
 
 function withTimeout(promise, ms) {
   return Promise.race([
@@ -19,8 +15,27 @@ function withTimeout(promise, ms) {
   ]);
 }
 
+const noop = () => {};
+
 export class YandexSDK {
-  constructor() {
+  /**
+   * @param {object} [options]
+   * @param {string} [options.leaderboardName] — техническое имя лидерборда в консоли разработчика
+   * @param {string} [options.mockStorageKey] — ключ localStorage для mock-сохранений
+   * @param {() => void} [options.onPauseAudio] — пауза звука при рекламе/оверлеях
+   * @param {() => void} [options.onResumeAudio] — возобновление звука после оверлея
+   */
+  constructor({
+    leaderboardName = "score",
+    mockStorageKey = "yandex_game_save",
+    onPauseAudio = noop,
+    onResumeAudio = noop,
+  } = {}) {
+    this.leaderboardName = leaderboardName;
+    this.mockStorageKey = mockStorageKey;
+    this.onPauseAudio = onPauseAudio;
+    this.onResumeAudio = onResumeAudio;
+
     this.ysdk = null;
     this.player = null;
     this.isMock = false;
@@ -39,7 +54,7 @@ export class YandexSDK {
   }
 
   _finishOverlay({ resumeGameplay }) {
-    resumeBackgroundMusic();
+    this.onResumeAudio();
     if (resumeGameplay) {
       this.gameplayStart();
     }
@@ -53,7 +68,7 @@ export class YandexSDK {
       }
 
       this.gameplayStop();
-      pauseBackgroundMusic();
+      this.onPauseAudio();
 
       this.ysdk.adv.showFullscreenAdv({
         callbacks: {
@@ -79,7 +94,7 @@ export class YandexSDK {
       }
 
       this.gameplayStop();
-      pauseBackgroundMusic();
+      this.onPauseAudio();
 
       this.ysdk.adv.showRewardedVideo({
         callbacks: {
@@ -124,19 +139,19 @@ export class YandexSDK {
         }
 
         this.gameplayStop();
-        pauseBackgroundMusic();
+        this.onPauseAudio();
 
         const reviewResult = await this.ysdk.feedback.requestReview();
         this.reviewRequestedThisSession = true;
 
-        resumeBackgroundMusic();
+        this.onResumeAudio();
 
         return {
           shown: true,
           feedbackSent: Boolean(reviewResult?.feedbackSent),
         };
       } catch (err) {
-        resumeBackgroundMusic();
+        this.onResumeAudio();
         console.warn("[YandexSDK] requestReview:", err);
         return { shown: false, reason: "ERROR" };
       }
@@ -153,14 +168,13 @@ export class YandexSDK {
   enableMock(reason) {
     if (reason) console.info("[YandexSDK]", reason);
     this.isMock = true;
-    this.player = new MockPlayer();
+    this.player = new MockPlayer(this.mockStorageKey);
     return this;
   }
 
   async init() {
-    // Вне iframe Яндекс Игр init() часто никогда не резолвится — не ждём бесконечно
     if (isLocalDev()) {
-      return this.enableMock("Локальная разработка: mock-режим (SDK — на платформе Яндекс)");
+      return this.enableMock("Локальная разработка: mock-режим (SDK — на целевой платформе)");
     }
 
     await this.waitForSDK();
@@ -195,13 +209,13 @@ export class YandexSDK {
     this._platformEventsBound = true;
 
     this._handlePlatformPause = () => {
-      pauseBackgroundMusic();
+      this.onPauseAudio();
       this.gameplayStop();
       window.dispatchEvent(new CustomEvent("yandex:pause"));
     };
 
     this._handlePlatformResume = () => {
-      resumeBackgroundMusic();
+      this.onResumeAudio();
       window.dispatchEvent(new CustomEvent("yandex:resume"));
     };
 
@@ -221,92 +235,20 @@ export class YandexSDK {
     this.ysdk?.features?.GameplayAPI?.stop();
   }
 
-  async loadProgress() {
-    if (!this.player?.getData) {
-      return {
-        bestScore: 0,
-        coins: 0,
-        gamesPlayed: 0,
-        totalCorrect: 0,
-        modeTrophies: null,
-        unlockedEmojis: [],
-      };
-    }
+  async loadData(keys = []) {
+    if (!this.player?.getData) return {};
     try {
-      const data = await this.player.getData([
-        "bestScore",
-        "coins",
-        "gamesPlayed",
-        "totalCorrect",
-        "modeTrophies",
-        "unlockedEmojis",
-      ]);
-      let modeTrophies = null;
-      if (data.modeTrophies) {
-        try {
-          modeTrophies =
-            typeof data.modeTrophies === "string"
-              ? JSON.parse(data.modeTrophies)
-              : data.modeTrophies;
-        } catch {
-          modeTrophies = null;
-        }
-      }
-      let unlockedEmojis = [];
-      if (data.unlockedEmojis) {
-        try {
-          unlockedEmojis =
-            typeof data.unlockedEmojis === "string"
-              ? JSON.parse(data.unlockedEmojis)
-              : data.unlockedEmojis;
-          if (!Array.isArray(unlockedEmojis)) unlockedEmojis = [];
-        } catch {
-          unlockedEmojis = [];
-        }
-      }
-
-      return {
-        bestScore: Number(data.bestScore) || 0,
-        coins: Number(data.coins) || 0,
-        gamesPlayed: Number(data.gamesPlayed) || 0,
-        totalCorrect: Number(data.totalCorrect) || 0,
-        modeTrophies,
-        unlockedEmojis,
-      };
+      return await this.player.getData(keys);
     } catch (err) {
       console.warn("[YandexSDK] getData:", err);
-      return {
-        bestScore: 0,
-        coins: 0,
-        gamesPlayed: 0,
-        totalCorrect: 0,
-        modeTrophies: null,
-        unlockedEmojis: [],
-      };
+      return {};
     }
   }
 
-  async saveProgress({
-    bestScore,
-    coins,
-    gamesPlayed,
-    totalCorrect,
-    modeTrophies,
-    unlockedEmojis,
-  }) {
+  async saveData(data, flush = true) {
     if (!this.player?.setData) return;
     try {
-      await this.player.setData(
-        {
-          bestScore,
-          coins,
-          gamesPlayed,
-          totalCorrect,
-          modeTrophies: JSON.stringify(modeTrophies),
-          unlockedEmojis: JSON.stringify(unlockedEmojis ?? []),
-        },
-        true
-      );
+      await this.player.setData(data, flush);
     } catch (err) {
       console.warn("[YandexSDK] setData:", err);
     }
@@ -325,10 +267,7 @@ export class YandexSDK {
         this.player.getPhoto?.("large") ||
         null;
 
-      return {
-        name,
-        avatarUrl: avatarUrl || null,
-      };
+      return { name, avatarUrl: avatarUrl || null };
     } catch (err) {
       console.warn("[YandexSDK] getPlayerProfile:", err);
       return { name: "Игрок", avatarUrl: null };
@@ -359,7 +298,6 @@ export class YandexSDK {
       name: player?.publicName?.trim() || "Игрок",
       score: Number(entry.score) || 0,
       avatarUrl: this.extractLeaderboardAvatar(player),
-      borderColor: null,
       isSelf,
     };
   }
@@ -399,7 +337,7 @@ export class YandexSDK {
 
     try {
       const selfUniqueId = this.player?.getUniqueID?.() ?? null;
-      const result = await this.ysdk.leaderboards.getEntries(LEADERBOARD_NAME, {
+      const result = await this.ysdk.leaderboards.getEntries(this.leaderboardName, {
         quantityTop: limit,
         includeUser: true,
       });
@@ -430,36 +368,26 @@ export class YandexSDK {
     }
   }
 
-  async loadMockLeaderboard(limit = 10) {
-    try {
-      const res = await fetch("data/leaderboard.json");
-      if (!res.ok) return { top: [], self: null };
-      const data = await res.json();
-      const top = data.slice(0, limit).map((entry, index) => ({
-        rank: index + 1,
-        name: entry.name || "Игрок",
-        score: Number(entry.score) || 0,
-        avatarUrl: entry.avatarUrl || null,
-        borderColor: entry.borderColor || null,
-        isSelf: false,
-      }));
-      const profile = this.getPlayerProfile();
+  loadMockLeaderboard(limit = 10) {
+    const profile = this.getPlayerProfile();
+    const top = Array.from({ length: Math.min(limit, 5) }, (_, index) => ({
+      rank: index + 1,
+      name: `Игрок ${index + 1}`,
+      score: (limit - index) * 1000,
+      avatarUrl: null,
+      isSelf: false,
+    }));
 
-      return {
-        top,
-        self: {
-          rank: 42,
-          name: profile.name,
-          score: 12450,
-          avatarUrl: profile.avatarUrl,
-          borderColor: "#52b788",
-          isSelf: true,
-        },
-      };
-    } catch (err) {
-      console.warn("[YandexSDK] mock leaderboard:", err);
-      return { top: [], self: null };
-    }
+    return {
+      top,
+      self: {
+        rank: 42,
+        name: profile.name,
+        score: 0,
+        avatarUrl: profile.avatarUrl,
+        isSelf: true,
+      },
+    };
   }
 
   async setLeaderboardScore(score) {
@@ -467,7 +395,7 @@ export class YandexSDK {
     if (this.isMock || !this.ysdk?.leaderboards?.setScore) return;
 
     try {
-      await this.ysdk.leaderboards.setScore(LEADERBOARD_NAME, safeScore);
+      await this.ysdk.leaderboards.setScore(this.leaderboardName, safeScore);
     } catch (err) {
       console.warn("[YandexSDK] setScore:", err);
     }
@@ -475,8 +403,8 @@ export class YandexSDK {
 }
 
 class MockPlayer {
-  constructor() {
-    this._storageKey = "brawl_quiz_save";
+  constructor(storageKey) {
+    this._storageKey = storageKey;
   }
 
   getName() {
@@ -504,9 +432,6 @@ class MockPlayer {
   async setData(data) {
     const prev = await this.getData();
     const merged = { ...prev, ...data };
-    if (merged.modeTrophies && typeof merged.modeTrophies !== "string") {
-      merged.modeTrophies = JSON.stringify(merged.modeTrophies);
-    }
     localStorage.setItem(this._storageKey, JSON.stringify(merged));
   }
 }

@@ -1,0 +1,419 @@
+{
+  "scenes": {
+    "scene_ch04_apartment": {
+      "id": "scene_ch04_apartment",
+      "title": "Квартира — второе утро, 08:12",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Квартира утром, но с мелкими отличиями. На столе остаётся одна улика из прошлого цикла.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Спасал девушку — фото с новой надписью. Доставлял посылку — повреждённая пломба. Снимал видео — испорченный файл. Слушался «Синхрон» — сообщение «Вы почти помогли». Создал хаос — чёрный экран телефона.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Звонит Макс.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Ты живой?",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Скажи что-нибудь, чего ты не говорил вчера.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Я вчера тебе звонил?",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Вот теперь разговор становится интересным.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [
+        {
+          "id": "ch04_truth_max",
+          "text": "Рассказать правду Максу",
+          "nextSceneId": "scene_ch04_truth_max"
+        },
+        {
+          "id": "ch04_truth_nika",
+          "text": "Рассказать правду Нике",
+          "nextSceneId": "scene_ch04_truth_nika"
+        },
+        {
+          "id": "ch04_truth_orlova",
+          "text": "Рассказать правду Орловой",
+          "nextSceneId": "scene_ch04_truth_orlova"
+        },
+        {
+          "id": "ch04_truth_lera",
+          "text": "Рассказать правду Лере",
+          "nextSceneId": "scene_ch04_truth_lera"
+        },
+        {
+          "id": "ch04_truth_nobody",
+          "text": "Никому не рассказывать",
+          "nextSceneId": "scene_ch04_truth_nobody"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    },
+    "scene_ch04_truth_max": {
+      "id": "scene_ch04_truth_max",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "День повторяется. Я помню вчерашний вечер. И 19:43.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Тогда я не зря приехал.",
+          "thought": false,
+          "speaker": "char_max"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_lera_meet"
+    },
+    "scene_ch04_truth_nika": {
+      "id": "scene_ch04_truth_nika",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "Ника, это не монтаж. День зациклен.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_lera_meet"
+    },
+    "scene_ch04_truth_orlova": {
+      "id": "scene_ch04_truth_orlova",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "Инспектор, у меня новые улики. И память о вчерашнем дне.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_lera_meet"
+    },
+    "scene_ch04_truth_lera": {
+      "id": "scene_ch04_truth_lera",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "Лера, я знаю про «Синхрон». И про петлю.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_lera_meet"
+    },
+    "scene_ch04_truth_nobody": {
+      "id": "scene_ch04_truth_nobody",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём молчит. Иногда правда тяжелее, чем повторение дня.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_lera_meet"
+    },
+    "scene_ch04_lera_meet": {
+      "id": "scene_ch04_lera_meet",
+      "title": "Первая встреча с Лерой — 11:40",
+      "backgroundKey": "BG_09",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Кафе или лобби компании. У Артёма в кармане бейдж «Синхрон».",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Ты не должен был помнить.",
+          "thought": false,
+          "speaker": "char_lera"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Обычно люди начинают с «здравствуйте».",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Если ты помнишь прошлый цикл, значит, система отметила тебя как устойчивую переменную.",
+          "thought": false,
+          "speaker": "char_lera"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Звучит почти как повышение.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Нет. Это значит, что она будет использовать тебя снова и снова, пока не получит нужный результат.",
+          "thought": false,
+          "speaker": "char_lera"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Кто она?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "«Синхрон».",
+          "thought": false,
+          "speaker": "char_lera"
+        },
+        {
+          "kind": "narration",
+          "text": "Лера показывает карту города. На ней маршруты людей, точка 19:43 и имя Артёма.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Почему я?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Потому что твоя посылка каждый раз оказывается в центре события.",
+          "thought": false,
+          "speaker": "char_lera"
+        }
+      ],
+      "choices": [
+        {
+          "id": "ch04_lera_trust",
+          "text": "Довериться Лере",
+          "nextSceneId": "scene_ch04_lera_trust"
+        },
+        {
+          "id": "ch04_lera_questions",
+          "text": "Задать жёсткие вопросы",
+          "nextSceneId": "scene_ch04_lera_questions"
+        },
+        {
+          "id": "ch04_lera_blame",
+          "text": "Обвинить её",
+          "nextSceneId": "scene_ch04_lera_blame"
+        },
+        {
+          "id": "ch04_lera_pretend",
+          "text": "Сделать вид, что веришь, но скрыть посылку",
+          "nextSceneId": "scene_ch04_lera_pretend"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    },
+    "scene_ch04_lera_trust": {
+      "id": "scene_ch04_lera_trust",
+      "title": "",
+      "backgroundKey": "BG_09",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "Хорошо. Покажи, как остановить это.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_sync_office"
+    },
+    "scene_ch04_lera_questions": {
+      "id": "scene_ch04_lera_questions",
+      "title": "",
+      "backgroundKey": "BG_09",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "Сколько циклов уже было? Кто ещё помнит?",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_sync_office"
+    },
+    "scene_ch04_lera_blame": {
+      "id": "scene_ch04_lera_blame",
+      "title": "",
+      "backgroundKey": "BG_09",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "Ты знала. И молчала.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_sync_office"
+    },
+    "scene_ch04_lera_pretend": {
+      "id": "scene_ch04_lera_pretend",
+      "title": "",
+      "backgroundKey": "BG_09",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём кивает, но посылку не показывает.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_sync_office"
+    },
+    "scene_ch04_sync_office": {
+      "id": "scene_ch04_sync_office",
+      "title": "Офис «Синхрон» — поиск предметов 3",
+      "backgroundKey": "BG_10",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Поиск предметов — Офис «Синхрон». Найдено:\n1. Схема перекрёстка.\n2. Лог ошибок системы.\n3. Пропуск в серверную.\n4. Запись совещания.\n5. Черновик отчёта о петле.\n6. Карта маршрутов курьеров.\n7. Список «устойчивых переменных».\n8. Модуль диагностики.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Они знали, что день будет повторяться.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch04_hub"
+    },
+    "scene_ch04_hub": {
+      "id": "scene_ch04_hub",
+      "title": "Выбор ветки",
+      "backgroundKey": "BG_09",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "День снова тянется к 19:43. Пора выбрать, куда направить усилия.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Маршрут нестабилен. Выберите приоритет.",
+          "thought": false,
+          "speaker": "char_sync"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Выбираю сам.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [
+        {
+          "id": "hub_branch_a",
+          "text": "Спасти незнакомку",
+          "nextSceneId": "scene_a1_search"
+        },
+        {
+          "id": "hub_branch_b",
+          "text": "Ошибка курьера",
+          "nextSceneId": "scene_b1_address"
+        },
+        {
+          "id": "hub_branch_c",
+          "text": "Город без людей",
+          "nextSceneId": "scene_c1_empty"
+        },
+        {
+          "id": "hub_branch_d",
+          "text": "Союз с алгоритмом",
+          "nextSceneId": "scene_d1_route"
+        },
+        {
+          "id": "hub_branch_s1",
+          "text": "Память города",
+          "nextSceneId": "scene_s1_city"
+        },
+        {
+          "id": "hub_branch_s2",
+          "text": "Нулевой курьер",
+          "nextSceneId": "scene_s2_video"
+        },
+        {
+          "id": "hub_branch_e",
+          "text": "Настоящий конец дня",
+          "nextSceneId": "scene_e1_council"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    }
+  }
+}

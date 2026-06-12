@@ -7,406 +7,54 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <meta name="mobile-web-app-capable" content="yes" />
-    <title>Тест на знание бравлеров</title>
+    <title>Последний День Курьера</title>
     <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="css/fonts.css" />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
-    <div class="bg-pattern" aria-hidden="true"></div>
-
-    <div id="loader">
+    <div id="loader" class="loader">
+      <div class="loader__brand">
+        <span class="loader__brand-line">ПОСЛЕДНИЙ ДЕНЬ</span>
+        <span class="loader__brand-line">КУРЬЕРА</span>
+      </div>
       <div class="loader-spinner" aria-hidden="true"></div>
-      <p>Загрузка...</p>
+      <p class="loader__text">Загрузка...</p>
     </div>
 
-    <div id="app">
-      <!-- Главное меню -->
-      <section id="screen-menu" class="screen active">
-        <h1 class="game-title">
-          <img
-            class="game-logo"
-            src="assets/ui/logo.png"
-            alt="Тест на знание бравлеров"
-            width="340"
-            height="340"
-            fetchpriority="high"
-          />
-        </h1>
+    <div id="app"></div>
 
-        <div class="menu-stack">
-          <button type="button" id="btn-play" class="btn btn-yellow">Играть</button>
-          <button type="button" id="btn-mode" class="btn btn-blue">Выбор режима</button>
-          <button type="button" id="btn-stats" class="btn btn-blue">Статистика</button>
-          <button type="button" id="btn-rewards" class="btn btn-blue">Награды</button>
-        </div>
+    <!-- SDK платформы: https://yandex.ru/dev/games/doc/ru/sdk/sdk-about -->
+    <script>
+      (function () {
+        function startApp() {
+          import("./js/app.js").catch(function (err) {
+            console.error("Не удалось загрузить приложение:", err);
+            var loader = document.getElementById("loader");
+            if (loader) {
+              loader.querySelector(".loader__text").textContent = "Ошибка загрузки. Обновите страницу.";
+            }
+          });
+        }
 
-        <div class="menu-footer">
-          <button
-            type="button"
-            id="btn-settings"
-            class="btn btn-icon btn-settings"
-            aria-label="Настройки"
-          ></button>
-          <span class="coins-pill" aria-label="Монеты">
-            <img class="coins-pill__icon" src="assets/ui/coin.png" alt="" width="40" height="40" />
-            <span id="total-coins-menu" class="coins-pill__value">0</span>
-          </span>
-          <button
-            type="button"
-            id="btn-info"
-            class="btn btn-icon btn-info"
-            aria-label="Информация"
-          ></button>
-        </div>
-      </section>
-
-      <!-- Выбор режима -->
-      <section id="screen-mode" class="screen">
-        <header class="mode-header">
-          <button
-            type="button"
-            id="btn-mode-back"
-            class="btn btn-icon btn-back"
-            aria-label="Назад"
-          ></button>
-          <h2 class="mode-title">ВЫБЕРИ РЕЖИМ</h2>
-        </header>
-        <p class="mode-subtitle">Выбери уровень сложности теста</p>
-
-        <div class="mode-cards">
-          <button type="button" class="mode-card" data-mode="easy">
-            <span class="mode-card__inner">
-            <img class="mode-card__bg" src="assets/ui/card-1.png" alt="" />
-            <span class="mode-card__content">
-              <span class="mode-card__title">НАЧАЛЬНЫЙ</span>
-              <span class="mode-card__desc">Простые вопросы для начинающих!</span>
-              <span class="mode-card__trophy">
-                <img class="trophy-icon" src="assets/ui/kubok.png" alt="" width="22" height="22" />
-                <span class="mode-card__trophy-value" data-trophy="easy">0/100</span>
-              </span>
-            </span>
-            </span>
-            <span class="mode-card__lock" hidden>
-              <span class="mode-card__lock-badge">
-                <img class="trophy-icon" src="assets/ui/kubok.png" alt="" width="48" height="48" />
-                <strong class="mode-card__lock-value">0</strong>
-              </span>
-              <span class="mode-card__lock-label"></span>
-            </span>
-          </button>
-
-          <button type="button" class="mode-card" data-mode="medium">
-            <span class="mode-card__inner">
-            <img class="mode-card__bg" src="assets/ui/card-2.png" alt="" />
-            <span class="mode-card__content">
-              <span class="mode-card__title">СРЕДНИЙ</span>
-              <span class="mode-card__desc">Больше вопросов и сложнее задачи!</span>
-              <span class="mode-card__trophy">
-                <img class="trophy-icon" src="assets/ui/kubok.png" alt="" width="22" height="22" />
-                <span class="mode-card__trophy-value" data-trophy="medium">0/104</span>
-              </span>
-            </span>
-            </span>
-            <span class="mode-card__lock" hidden>
-              <span class="mode-card__lock-badge">
-                <img class="trophy-icon" src="assets/ui/kubok.png" alt="" width="48" height="48" />
-                <strong class="mode-card__lock-value">0</strong>
-              </span>
-              <span class="mode-card__lock-label"></span>
-            </span>
-          </button>
-
-          <button type="button" class="mode-card" data-mode="hard">
-            <span class="mode-card__inner">
-            <img class="mode-card__bg" src="assets/ui/card-3.png" alt="" />
-            <span class="mode-card__content">
-              <span class="mode-card__title">СЛОЖНЫЙ</span>
-              <span class="mode-card__desc">Для настоящих знатоков Brawl Stars!</span>
-              <span class="mode-card__trophy">
-                <img class="trophy-icon" src="assets/ui/kubok.png" alt="" width="22" height="22" />
-                <span class="mode-card__trophy-value" data-trophy="hard">0/100</span>
-              </span>
-            </span>
-            </span>
-            <span class="mode-card__lock" hidden>
-              <span class="mode-card__lock-badge">
-                <img class="trophy-icon" src="assets/ui/kubok.png" alt="" width="48" height="48" />
-                <strong class="mode-card__lock-value">0</strong>
-              </span>
-              <span class="mode-card__lock-label"></span>
-            </span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Игровой экран -->
-      <section id="screen-game" class="screen">
-        <div class="game-layout">
-          <div class="game-top">
-            <header class="game-header">
-              <button type="button" id="btn-back" class="btn btn-icon btn-back" aria-label="Назад"></button>
-              <span id="question-progress" class="game-header__progress">ВОПРОС 1/10</span>
-              <div class="coins-pill" aria-label="Монеты">
-                <img class="coins-pill__icon" src="assets/ui/coin.png" alt="" width="40" height="40" />
-                <span id="coins-display" class="coins-pill__value">0</span>
-              </div>
-            </header>
-
-            <div id="game-mode-badge" class="game-mode-badge" data-mode="easy" aria-label="Уровень">
-              НАЧАЛЬНЫЙ
-            </div>
-          </div>
-
-          <div class="game-body">
-            <div id="question-text" class="question-box">Вопрос загружается...</div>
-            <div id="answers-container" class="answers"></div>
-          </div>
-
-          <div id="hint-panel" class="hint-panel">
-            <div class="hint-tools">
-              <button
-                type="button"
-                id="btn-hint-exclude"
-                class="hint-tool"
-                aria-label="Исключить вариант"
-              >
-                <img class="hint-tool__icon" src="assets/ui/hint-exclude.svg" alt="" width="40" height="40" />
-                <span class="hint-tool__label">Исключить<br />вариант</span>
-              </button>
-              <button
-                type="button"
-                id="btn-hint-highlight"
-                class="hint-tool"
-                aria-label="Подсветить правильный"
-              >
-                <img class="hint-tool__icon" src="assets/ui/hint-highlight.svg" alt="" width="40" height="40" />
-                <span class="hint-tool__label">Подсветить<br />правильный</span>
-              </button>
-              <button
-                type="button"
-                id="btn-hint-audience"
-                class="hint-tool"
-                aria-label="Помощь зала"
-              >
-                <img class="hint-tool__icon" src="assets/ui/hint-audience.svg" alt="" width="40" height="40" />
-                <span class="hint-tool__label">Помощь<br />зала</span>
-              </button>
-            </div>
-            <button
-              type="button"
-              id="btn-hint-ad"
-              class="btn btn-hint"
-              aria-label="Смотреть рекламу и получить подсказку"
-            >
-              <picture class="btn-hint__picture">
-                <source
-                  media="(max-width: 768px), (hover: none) and (pointer: coarse)"
-                  srcset="assets/ui/ads_mobile.png"
-                />
-                <img class="btn-hint__img" src="assets/ui/ads.png" alt="" />
-              </picture>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Награды -->
-      <section id="screen-rewards" class="screen">
-        <header class="rewards-header mode-header">
-          <button
-            type="button"
-            id="btn-rewards-back"
-            class="btn btn-icon btn-back"
-            aria-label="Назад"
-          ></button>
-          <h2 class="rewards-title mode-title">НАГРАДЫ</h2>
-        </header>
-
-        <p class="rewards-subtitle">
-          Собрано: <strong id="rewards-count">0/20</strong>
-          <span class="rewards-subtitle__hint">· Нажми на emoji, чтобы купить за 120</span>
-        </p>
-
-        <div class="rewards-grid-wrap">
-          <div id="rewards-grid" class="rewards-grid" aria-label="Коллекция emoji"></div>
-        </div>
-      </section>
-
-      <!-- Статистика / рейтинг -->
-      <section id="screen-stats" class="screen">
-        <header class="stats-header mode-header">
-          <button
-            type="button"
-            id="btn-stats-back"
-            class="btn btn-icon btn-back"
-            aria-label="Назад"
-          ></button>
-          <h2 class="stats-title mode-title">СТАТИСТИКА</h2>
-        </header>
-
-        <div class="stats-scroll-wrap">
-          <div class="stats-scroll" id="stats-scroll">
-            <ul class="stats-list" id="stats-list"></ul>
-          </div>
-          <div class="stats-self-pin" id="stats-self-pin" hidden>
-            <p class="stats-self-pin__label">Ваше место в таблице</p>
-            <ul class="stats-list stats-list--self">
-              <li id="stats-self-row"></li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- Результаты -->
-      <section id="screen-results" class="screen">
-        <div class="results-layout">
-          <h2 id="results-title" class="results-header">ПРАВИЛЬНО!</h2>
-
-          <div class="results-hero">
-            <div class="results-sunburst" aria-hidden="true"></div>
-            <img
-              class="results-hero__img"
-              src="assets/ui/in.png"
-              alt=""
-              width="200"
-              height="200"
-            />
-          </div>
-
-          <p class="results-label">ТВОЙ РЕЗУЛЬТАТ</p>
-          <p id="score-display" class="results-score">0/10</p>
-
-          <div class="results-stats">
-            <div class="results-stat">
-              <img class="trophy-icon results-stat__icon" src="assets/ui/kubok.png" alt="" width="28" height="28" />
-              <span class="results-stat__label">ЛУЧШИЙ РЕЗУЛЬТАТ</span>
-              <strong id="best-score-display" class="results-stat__value">0/10</strong>
-            </div>
-            <div class="results-stat">
-              <img
-                class="results-stat__icon results-stat__icon--coin"
-                src="assets/ui/coin.png"
-                alt=""
-                width="28"
-                height="28"
-              />
-              <span class="results-stat__label">НАБРАНО МОНЕТ</span>
-              <strong id="session-coins" class="results-stat__value">0</strong>
-            </div>
-          </div>
-
-          <div class="results-actions">
-            <button type="button" id="btn-play-again" class="btn btn-yellow">Следующий раунд</button>
-            <button type="button" id="btn-restart-round" class="btn btn-blue">Заново</button>
-            <button type="button" id="btn-main-menu" class="btn btn-blue">Главное меню</button>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- Модалки -->
-    <div id="modal-settings" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-settings-title">
-      <div class="modal modal--settings">
-        <h2 id="modal-settings-title">Настройки</h2>
-        <ul class="settings-list">
-          <li class="settings-row">
-            <span class="settings-row__label">Звук</span>
-            <label class="settings-toggle">
-              <input type="checkbox" id="setting-sound" checked />
-              <span class="settings-toggle__track" aria-hidden="true"></span>
-              <span class="visually-hidden">Звук</span>
-            </label>
-          </li>
-          <li class="settings-row">
-            <span class="settings-row__label">Отключить эмодзи эффекты</span>
-            <label class="settings-toggle">
-              <input type="checkbox" id="setting-emoji-off" />
-              <span class="settings-toggle__track" aria-hidden="true"></span>
-              <span class="visually-hidden">Отключить эмодзи эффекты</span>
-            </label>
-          </li>
-          <li class="settings-row">
-            <span class="settings-row__label">Убрать подсказки</span>
-            <label class="settings-toggle">
-              <input type="checkbox" id="setting-hints-off" />
-              <span class="settings-toggle__track" aria-hidden="true"></span>
-              <span class="visually-hidden">Убрать подсказки</span>
-            </label>
-          </li>
-        </ul>
-        <button type="button" class="btn btn-blue" data-close-modal="modal-settings">Закрыть</button>
-      </div>
-    </div>
-
-    <div id="modal-info" class="modal-overlay" role="dialog" aria-modal="true">
-      <div class="modal">
-        <h2>О игре</h2>
-        <p>
-          Неофициальный фан-квиз по вселенной Brawl Stars. Отвечай на вопросы, зарабатывай монеты и
-          улучшай лучший результат.
-        </p>
-        <button type="button" class="btn btn-blue" data-close-modal="modal-info">Закрыть</button>
-      </div>
-    </div>
-
-    <div id="modal-confirm" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-title">
-      <div class="modal modal--confirm">
-        <h2 id="modal-confirm-title">Подтвердите действие</h2>
-        <p id="modal-confirm-message"></p>
-        <div class="modal-actions">
-          <button type="button" id="modal-confirm-cancel" class="btn btn-blue">Отмена</button>
-          <button type="button" id="modal-confirm-ok" class="btn btn-yellow">Да</button>
-        </div>
-      </div>
-    </div>
-
-  <!-- SDK: /sdk.js на сервере Яндекс; в локальной dev — CDN (см. sdk-about) -->
-  <script>
-    (function () {
-      var SDK_CDN = "https://sdk.games.s3.yandex.net/sdk.js";
-
-      function getSdkUrl() {
         var host = location.hostname;
-        if (host === "localhost" || host === "127.0.0.1") {
-          return SDK_CDN;
+        var isLocal = host === "localhost" || host === "127.0.0.1";
+
+        if (isLocal) {
+          startApp();
+          return;
         }
-        if (/\.?(yandex\.ru|yandex\.com|yandex\.net)$/i.test(host) || host.indexOf("games.") !== -1) {
-          return "/sdk.js";
-        }
-        return SDK_CDN;
-      }
 
-      function startApp() {
-        import("./js/app.js").catch(function (err) {
-          console.error("Не удалось загрузить приложение:", err);
-          var loader = document.getElementById("loader");
-          if (loader) {
-            loader.querySelector("p").textContent = "Ошибка загрузки. Обновите страницу.";
-          }
-        });
-      }
-
-      var host = location.hostname;
-      var isLocal = host === "localhost" || host === "127.0.0.1";
-
-      // Локально YaGames.init() зависает вне iframe — SDK не подключаем, сразу стартуем игру
-      if (isLocal) {
-        startApp();
-        return;
-      }
-
-      var script = document.createElement("script");
-      script.src = getSdkUrl();
-      script.async = true;
-      script.onload = startApp;
-      script.onerror = function () {
-        console.warn("[SDK] Не загрузился:", script.src);
-        startApp();
-      };
-      document.body.appendChild(script);
-    })();
-  </script>
+        var script = document.createElement("script");
+        script.src = "/sdk.js";
+        script.async = true;
+        script.onload = startApp;
+        script.onerror = function () {
+          console.warn("[SDK] Не удалось загрузить /sdk.js");
+          startApp();
+        };
+        document.body.appendChild(script);
+      })();
+    </script>
   </body>
-</html>
-
 </html>

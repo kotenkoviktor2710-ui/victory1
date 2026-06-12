@@ -1,0 +1,379 @@
+{
+  "scenes": {
+    "scene_ch01_apartment": {
+      "id": "scene_ch01_apartment",
+      "title": "Квартира Артёма — 08:12",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Небольшая городская квартира. Утренний свет через жалюзи. На столе телефон, ключи, чашка чая. На стуле курьерская куртка. У окна лежит серая посылка без логотипа.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Я проснулся от будильника, который точно не ставил.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Вчера я удалил это приложение. Или мне уже снится, что я борюсь с будильниками?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Он берёт телефон. На экране уведомление:\n\nСегодня важный день. Не опаздывай.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Звонит Макс.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Ты живой?",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Доброе утро и тебе.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Нет, я серьёзно. Мне приснилось, что ты звонил и сказал: «Не дай мне доставить коробку».",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "narration",
+          "text": "Артём смотрит на посылку у окна.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Макс.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Что?",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "У меня дома коробка.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Ты курьер. Это не самый странный поворот.",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Она не из службы. На ней нет номера заказа.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Поиск предметов — Квартира Артёма. Найдено 8 предметов:\n1. Квитанция с завтрашней датой.\n2. Ключ с биркой «Склад 17».\n3. Скомканная записка «Не доставляй посылку».\n4. Фото незнакомой девушки.\n5. Бейдж «Синхрон».\n6. Чёрная флешка.\n7. Часы, остановившиеся на 19:43.\n8. Маршрутный лист доставки.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Либо я вчера жил очень насыщенной жизнью, либо кто-то устроил мне квест без моего согласия.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Телефон загорается.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Маршрут подтверждён. Получатель ожидает.",
+          "thought": false,
+          "speaker": "char_sync"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Кто это пишет?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Вы опаздываете на семь минут.",
+          "thought": false,
+          "speaker": "char_sync"
+        }
+      ],
+      "choices": [
+        {
+          "id": "ch01_take_parcel",
+          "text": "Взять посылку и поехать по маршруту",
+          "nextSceneId": "scene_ch01_after_take"
+        },
+        {
+          "id": "ch01_open_parcel",
+          "text": "Открыть посылку",
+          "nextSceneId": "scene_ch01_after_open"
+        },
+        {
+          "id": "ch01_call_max",
+          "text": "Позвонить Максу и попросить приехать",
+          "nextSceneId": "scene_ch01_after_max"
+        },
+        {
+          "id": "ch01_hide_parcel",
+          "text": "Спрятать посылку и выйти без неё",
+          "nextSceneId": "scene_ch01_after_hide"
+        },
+        {
+          "id": "ch01_throw_parcel",
+          "text": "Выбросить посылку",
+          "nextSceneId": "scene_ch01_after_throw"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    },
+    "scene_ch01_after_take": {
+      "id": "scene_ch01_after_take",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём берёт посылку. Она тяжелее, чем кажется.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch01_yard"
+    },
+    "scene_ch01_after_open": {
+      "id": "scene_ch01_after_open",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Внутри — пустое гнездо из пенопласта и металлический модуль без маркировки. Техническая улика.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Кто-то уже вскрывал это до меня. Или наоборот — готовил к вскрытию.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch01_yard"
+    },
+    "scene_ch01_after_max": {
+      "id": "scene_ch01_after_max",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "dialogue",
+          "text": "Макс, приезжай. Мне нужна вторая голова. Или хотя бы человек, который смеётся над моими шутками.",
+          "thought": false,
+          "speaker": "char_artem"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch01_yard_max"
+    },
+    "scene_ch01_after_hide": {
+      "id": "scene_ch01_after_hide",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём прячет посылку за холодильником и выходит без неё.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch01_yard"
+    },
+    "scene_ch01_after_throw": {
+      "id": "scene_ch01_after_throw",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Посылка летит в мусорный бак. На секунду Артёму кажется, что это правильное решение.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Вы отклонились от маршрута.",
+          "thought": false,
+          "speaker": "char_sync"
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch01_yard"
+    },
+    "scene_ch01_yard": {
+      "id": "scene_ch01_yard",
+      "title": "Двор — 08:45",
+      "backgroundKey": "BG_02",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Бублик подбегает к Артёму и начинает лаять на телефон.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Пёс умнее нас. Он уже понял, что источник проблемы — техника.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Телефон вибрирует.\n\nИзменение маршрута.\nСледующая точка: кафе «Минута».",
+          "thought": false
+        }
+      ],
+      "choices": [
+        {
+          "id": "ch01_cafe",
+          "text": "Пойти в кафе «Минута»",
+          "nextSceneId": "scene_ch02_cafe"
+        },
+        {
+          "id": "ch01_warehouse",
+          "text": "Поехать на склад доставки",
+          "nextSceneId": "scene_ch02_warehouse"
+        },
+        {
+          "id": "ch01_orlova",
+          "text": "Пойти к инспектору Орловой",
+          "nextSceneId": "scene_ch02_orlova"
+        },
+        {
+          "id": "ch01_observe",
+          "text": "Игнорировать маршрут и наблюдать за городом",
+          "nextSceneId": "scene_ch02_observe"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    },
+    "scene_ch01_yard_max": {
+      "id": "scene_ch01_yard_max",
+      "title": "Двор — 08:45",
+      "backgroundKey": "BG_02",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Бублик подбегает к Артёму и начинает лаять на телефон.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Пёс умнее нас. Он уже понял, что источник проблемы — техника.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Макс появляется у подъезда.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Показывай коробку Судного дня.",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Ты слишком быстро приехал.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Я живу в десяти минутах.",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Ты никогда не приходишь вовремя.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Вот поэтому я тоже считаю это странным.",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "narration",
+          "text": "Телефон вибрирует.\n\nИзменение маршрута.\nСледующая точка: кафе «Минута».",
+          "thought": false
+        }
+      ],
+      "choices": [
+        {
+          "id": "ch01_cafe",
+          "text": "Пойти в кафе «Минута»",
+          "nextSceneId": "scene_ch02_cafe"
+        },
+        {
+          "id": "ch01_warehouse",
+          "text": "Поехать на склад доставки",
+          "nextSceneId": "scene_ch02_warehouse"
+        },
+        {
+          "id": "ch01_orlova",
+          "text": "Пойти к инспектору Орловой",
+          "nextSceneId": "scene_ch02_orlova"
+        },
+        {
+          "id": "ch01_observe",
+          "text": "Игнорировать маршрут и наблюдать за городом",
+          "nextSceneId": "scene_ch02_observe"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    }
+  }
+}
