@@ -72,6 +72,7 @@ html {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+  overscroll-behavior-y: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -84,10 +85,26 @@ body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+  overscroll-behavior-y: none;
   touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
   font-family: var(--font-body);
   background: #050810;
   color: #f3f6fb;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #loader,
@@ -183,6 +200,7 @@ body {
   height: var(--app-height, 100dvh);
   overflow: hidden;
   overscroll-behavior: none;
+  overscroll-behavior-y: none;
   contain: layout style paint;
 }
 
@@ -2975,7 +2993,7 @@ body {
 
   .textbox {
     width: calc(100% - 1rem);
-    padding: 0.85rem 1rem 1rem;
+    padding: 0.75rem 0.85rem 0.85rem;
     border-radius: var(--glass-radius-lg);
     max-height: min(
       58dvh,
@@ -2983,9 +3001,19 @@ body {
     );
   }
 
+  .textbox--with-choices {
+    padding-bottom: 0.65rem;
+  }
+
+  .textbox__name {
+    margin-bottom: 0.45rem;
+    padding: 0.28rem 0.75rem 0.28rem 0.6rem;
+    font-size: clamp(0.58rem, 2.6vw, 0.66rem);
+  }
+
   .textbox__text {
-    font-size: clamp(0.92rem, 3.8vw, 1.05rem);
-    line-height: 1.6;
+    font-size: clamp(0.88rem, 3.6vw, 1rem);
+    line-height: 1.55;
   }
 
   .scan-zone {
@@ -3014,17 +3042,45 @@ body {
     width: min(34vw, 150px);
   }
 
+  .character--left,
+  .character--right,
+  .character--center {
+    max-height: 92%;
+  }
+
   .character__img {
-    max-height: min(52dvh, calc(var(--app-height, 100dvh) * 0.52));
+    max-height: min(72dvh, calc(var(--app-height, 100dvh) * 0.72));
+  }
+
+  .character--placeholder .character__placeholder {
+    height: min(68dvh, calc(var(--app-height, 100dvh) * 0.68), 520px);
+  }
+
+  .textbox .choices--inline {
+    margin-top: 0.5rem;
   }
 
   .choices__list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.32rem;
   }
 
-  .textbox--with-choices .choice-btn {
-    min-height: 46px;
-    padding: 0.65rem 0.8rem;
+  .textbox--with-choices .choice-btn,
+  .choice-btn {
+    min-height: 38px;
+    padding: 0.45rem 0.6rem;
+    gap: 0.4rem;
+  }
+
+  .choice-btn__index {
+    width: 1.3rem;
+    height: 1.3rem;
+    font-size: 0.66rem;
+  }
+
+  .choice-btn__text {
+    font-size: clamp(0.72rem, 3vw, 0.82rem);
+    line-height: 1.28;
   }
 
   .hud-btn {
@@ -3073,13 +3129,43 @@ body {
 
   .textbox {
     width: calc(100% - 0.75rem);
-    padding: 0.75rem 0.85rem 0.9rem;
+    padding: 0.65rem 0.75rem 0.75rem;
   }
 
   .textbox__name {
-    margin-bottom: 0.45rem;
-    padding: 0.28rem 0.75rem 0.28rem 0.6rem;
+    margin-bottom: 0.35rem;
+    padding: 0.24rem 0.65rem 0.24rem 0.55rem;
+    font-size: 0.56rem;
+  }
+
+  .textbox__text {
+    font-size: clamp(0.84rem, 3.4vw, 0.94rem);
+    line-height: 1.48;
+  }
+
+  .textbox .choices--inline {
+    margin-top: 0.42rem;
+  }
+
+  .choices__list {
+    gap: 0.28rem;
+  }
+
+  .choice-btn {
+    min-height: 36px;
+    padding: 0.4rem 0.55rem;
+    gap: 0.35rem;
+  }
+
+  .choice-btn__index {
+    width: 1.2rem;
+    height: 1.2rem;
     font-size: 0.62rem;
+  }
+
+  .choice-btn__text {
+    font-size: 0.72rem;
+    line-height: 1.25;
   }
 
   .game-dialog__btn {
@@ -3088,6 +3174,12 @@ body {
 
   .panel__title {
     font-size: 0.95rem;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 641px) {
+  .character__img {
+    max-height: min(58dvh, calc(var(--app-height, 100dvh) * 0.58));
   }
 }
 
@@ -3110,10 +3202,6 @@ body {
   .menu-btn {
     min-height: 44px;
     padding: 0.62rem 0.95rem;
-  }
-
-  .character__img {
-    max-height: min(46dvh, calc(var(--app-height, 100dvh) * 0.46));
   }
 
   .textbox {
@@ -3172,7 +3260,7 @@ body {
   }
 
   .character__img {
-    max-height: min(38dvh, calc(var(--app-height, 100dvh) * 0.38));
+    max-height: min(44dvh, calc(var(--app-height, 100dvh) * 0.44));
   }
 
   .character--sync {
@@ -3192,12 +3280,13 @@ body {
   }
 
   .choice-btn {
-    min-height: 42px;
-    padding: 0.55rem 0.7rem;
+    min-height: 34px;
+    padding: 0.38rem 0.5rem;
   }
 
   .choice-btn__text {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
+    line-height: 1.22;
   }
 
   .novel--scan .scan-zones {
@@ -3239,17 +3328,28 @@ body {
 .story-flowchart__bg {
   position: absolute;
   inset: 0;
+  background: url("../images/8bg.png") center / cover no-repeat;
+  transform: scale(1.03);
+}
+
+.story-flowchart__bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background:
-    radial-gradient(circle at 18% 12%, rgba(232, 93, 42, 0.16), transparent 42%),
+    radial-gradient(circle at 18% 12%, rgba(232, 93, 42, 0.14), transparent 42%),
     radial-gradient(circle at 82% 78%, rgba(196, 71, 26, 0.1), transparent 36%),
-    linear-gradient(180deg, #0a0a10 0%, #060608 100%);
+    linear-gradient(180deg, rgba(18, 18, 26, 0.48) 0%, rgba(12, 12, 18, 0.62) 100%);
 }
 
 .story-flowchart__vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at center, transparent 35%, rgba(0, 0, 0, 0.55) 100%);
+  background:
+    linear-gradient(180deg, rgba(6, 6, 10, 0.22) 0%, transparent 22%),
+    radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.34) 100%);
 }
 
 .story-flowchart__head {
@@ -3260,7 +3360,7 @@ body {
   gap: 1rem;
   padding: 0.9rem 1.25rem;
   border-bottom: 1px solid var(--glass-border-soft);
-  background: var(--glass-bg-strong);
+  background: rgba(10, 10, 14, 0.42);
   backdrop-filter: var(--glass-blur-strong);
   -webkit-backdrop-filter: var(--glass-blur-strong);
   box-shadow: var(--glass-shadow-soft);
@@ -3416,7 +3516,7 @@ body {
   background:
     linear-gradient(90deg, rgba(232, 93, 42, 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
     linear-gradient(rgba(232, 93, 42, 0.04) 1px, transparent 1px) 0 0 / 28px 28px,
-    rgba(4, 4, 8, 0.55);
+    rgba(10, 10, 16, 0.24);
 }
 
 .story-flowchart__viewport--vertical {
