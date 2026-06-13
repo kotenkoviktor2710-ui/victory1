@@ -1,0 +1,211 @@
+{
+  "scenes": {
+    "scene_ch03_evening": {
+      "id": "scene_ch03_evening",
+      "title": "День продолжается",
+      "backgroundKey": "BG_07",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "День тянется. Город живёт своей суетой. Часы приближаются к вечеру.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "19:38. Центральный перекрёсток.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch03_crossroad"
+    },
+    "scene_ch03_crossroad": {
+      "id": "scene_ch03_crossroad",
+      "title": "Перекрёсток — 19:38",
+      "backgroundKey": "BG_08",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Вечер. Машины стоят у светофора. Люди идут домой. На билборде реклама «Синхрона»: «Город, который заботится о вас».",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Артём видит девушку с фото. Она идёт к переходу.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Телефон вибрирует.\n\nНе вмешивайтесь.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Вот теперь точно вмешаюсь.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Светофор гаснет. Машины начинают двигаться не по правилам. Девушка замирает на переходе.",
+          "thought": false
+        }
+      ],
+      "choices": [
+        {
+          "id": "ch03_save",
+          "text": "Броситься к девушке",
+          "nextSceneId": "scene_ch03_action_save"
+        },
+        {
+          "id": "ch03_deliver",
+          "text": "Защитить посылку и доставить её",
+          "nextSceneId": "scene_ch03_action_deliver"
+        },
+        {
+          "id": "ch03_film",
+          "text": "Снять происходящее на телефон",
+          "nextSceneId": "scene_ch03_action_film"
+        },
+        {
+          "id": "ch03_obey",
+          "text": "Следовать инструкции и не вмешиваться",
+          "nextSceneId": "scene_ch03_action_obey"
+        },
+        {
+          "id": "ch03_chaos",
+          "text": "Попытаться остановить всех хаотично",
+          "nextSceneId": "scene_ch03_action_chaos"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    },
+    "scene_ch03_action_save": {
+      "id": "scene_ch03_action_save",
+      "title": "",
+      "backgroundKey": "BG_08",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём бросается к девушке. Мир сжимается до секунды перед ударом.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch03_repeat"
+    },
+    "scene_ch03_action_deliver": {
+      "id": "scene_ch03_action_deliver",
+      "title": "",
+      "backgroundKey": "BG_08",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём прижимает посылку к груди и бежит по маршруту сквозь хаос.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch03_repeat"
+    },
+    "scene_ch03_action_film": {
+      "id": "scene_ch03_action_film",
+      "title": "",
+      "backgroundKey": "BG_08",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Камера телефона фиксирует сбой светофора. Видео обрывается на 19:43.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch03_repeat"
+    },
+    "scene_ch03_action_obey": {
+      "id": "scene_ch03_action_obey",
+      "title": "",
+      "backgroundKey": "BG_08",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём стоит неподвижно. Система довольна. Человек — нет.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch03_repeat"
+    },
+    "scene_ch03_action_chaos": {
+      "id": "scene_ch03_action_chaos",
+      "title": "",
+      "backgroundKey": "BG_08",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём кричит, машет руками, пытается остановить поток. Хаос только растёт.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_ch03_repeat"
+    },
+    "scene_ch03_repeat": {
+      "id": "scene_ch03_repeat",
+      "title": "Первый повтор",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Звук тормозов. Вспышка. Чёрный экран.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Попытка неудачна. Повтор дня запущен.",
+          "thought": false,
+          "speaker": "char_sync"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Нет. Подожди. Что случилось?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Доброе утро, Артём Воронов.",
+          "thought": false,
+          "speaker": "char_sync"
+        },
+        {
+          "kind": "narration",
+          "text": "Переход к квартире. Снова 08:12.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": {
+        "enabled": true,
+        "title": "ГЛАВА 4 — ВТОРОЕ УТРО",
+        "backgroundKey": "BG_01"
+      },
+      "autoNextSceneId": "scene_ch04_apartment"
+    }
+  }
+}

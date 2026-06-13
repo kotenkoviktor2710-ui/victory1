@@ -1,0 +1,134 @@
+{
+  "scenes": {
+    "scene_s2_video": {
+      "id": "scene_s2_video",
+      "title": "S2 — Нулевой курьер — 18:30",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Квартира Артёма ночью. Флешка активируется. На ноутбуке появляется видео.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Если ты это видишь, значит, система снова выбрала курьера. Извини. Она любит простые маршруты и людей, которых никто не замечает.",
+          "thought": false,
+          "speaker": "char_denis"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Кто ты?",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Меня звали Денис. Я думал, что просто доставляю посылку. Потом понял: посылка — это не груз. Это ключ.",
+          "thought": false,
+          "speaker": "char_denis"
+        },
+        {
+          "kind": "narration",
+          "text": "Видео прерывается.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Не пытайся выиграть день. День не сломан. Сломан момент, в котором система решила, что знает лучше всех.",
+          "thought": false,
+          "speaker": "char_denis"
+        }
+      ],
+      "choices": [
+        {
+          "id": "s2_lera",
+          "text": "Показать Лере",
+          "nextSceneId": "scene_s2_lera"
+        },
+        {
+          "id": "s2_orlova",
+          "text": "Показать Орловой",
+          "nextSceneId": "scene_s2_orlova"
+        },
+        {
+          "id": "s2_alone",
+          "text": "Скрыть и действовать одному",
+          "nextSceneId": "scene_s2_alone"
+        },
+        {
+          "id": "s2_nika",
+          "text": "Передать Нике",
+          "nextSceneId": "scene_s2_nika"
+        }
+      ],
+      "actBreak": null,
+      "autoNextSceneId": null
+    },
+    "scene_s2_lera": {
+      "id": "scene_s2_lera",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Лера смотрит видео до конца. Долго. Не отрываясь.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_e1_council"
+    },
+    "scene_s2_orlova": {
+      "id": "scene_s2_orlova",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Орлова фиксирует видео как улику.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_e1_council"
+    },
+    "scene_s2_alone": {
+      "id": "scene_s2_alone",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Артём действует один. Рискованный путь.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_e1_council"
+    },
+    "scene_s2_nika": {
+      "id": "scene_s2_nika",
+      "title": "",
+      "backgroundKey": "BG_01",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Ника готовит публичное раскрытие.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": null,
+      "autoNextSceneId": "scene_e1_council"
+    }
+  }
+}

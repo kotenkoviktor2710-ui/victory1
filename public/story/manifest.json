@@ -1,0 +1,65 @@
+{
+  "storyTitle": "Последний День Курьера",
+  "initialSceneId": "scene_prologue",
+  "defaultVariables": {
+    "trust_max": 0,
+    "trust_lera": 0,
+    "trust_orlova": 0,
+    "trust_nika": 0,
+    "sync_obedience": 0,
+    "humanity_score": 0,
+    "parcel_focus": 0,
+    "observer_score": 0,
+    "evidence_count": 0,
+    "chaos_score": 0,
+    "cycle_count": 0
+  },
+  "storyAssetCatalog": {
+    "characters": [
+      { "id": "char_artem", "label": "Артём Воронов", "imageUrl": "./images/artem.png" },
+      { "id": "char_max", "label": "Макс Белов", "imageUrl": "./images/maks.png" },
+      { "id": "char_lera", "label": "Лера Нечаева", "imageUrl": "./images/lera.png" },
+      { "id": "char_orlova", "label": "Инспектор Орлова", "imageUrl": "./images/orlova.png" },
+      { "id": "char_nika", "label": "Ника Соколова", "imageUrl": "./images/nika.png" },
+      { "id": "char_irina", "label": "Ирина Лаврова", "imageUrl": "./images/irina.png" },
+      { "id": "char_viktor", "label": "Виктор Романов", "imageUrl": "./images/viktor.png" },
+      { "id": "char_bublik", "label": "Бублик", "imageUrl": "./images/bublic.png" },
+      { "id": "char_sync", "label": "СИНХРОН" },
+      { "id": "char_anya", "label": "Аня Морозова", "imageUrl": "./images/anya.png" },
+      { "id": "char_denis", "label": "Денис", "imageUrl": "./images/denis.png" }
+    ],
+    "backgrounds": [
+      { "key": "BG_01", "imageUrl": "./images/1bg.png" },
+      { "key": "BG_02", "imageUrl": "./images/2bg.png" },
+      { "key": "BG_03", "imageUrl": "./images/3bg.png" },
+      { "key": "BG_04", "imageUrl": "./images/4bg.png" },
+      { "key": "BG_05", "imageUrl": "./images/5bg.png" },
+      { "key": "BG_06", "imageUrl": "./images/6bg.png" },
+      { "key": "BG_07", "imageUrl": "./images/7bg.png" },
+      { "key": "BG_08", "imageUrl": "./images/8bg.png" },
+      { "key": "BG_09", "imageUrl": "./images/9bg.png" },
+      { "key": "BG_10", "imageUrl": "./images/10bg.png" },
+      { "key": "BG_11", "imageUrl": "./images/11bg.png" },
+      { "key": "BG_12", "imageUrl": "./images/12bg.png" },
+      { "key": "BG_13", "imageUrl": "./images/13bg.png" },
+      { "key": "BG_14", "imageUrl": "./images/14bg.png" },
+      { "key": "BG_15", "imageUrl": "./images/15bg.png" },
+      { "key": "BG_16", "imageUrl": "./images/16bg.png" }
+    ]
+  },
+  "files": [
+    "./story/ch00-prologue.json",
+    "./story/ch01-morning.json",
+    "./story/ch02-route.json",
+    "./story/ch03-collapse.json",
+    "./story/ch04-second-morning.json",
+    "./story/branch-a.json",
+    "./story/branch-b.json",
+    "./story/branch-c.json",
+    "./story/branch-d.json",
+    "./story/branch-s1.json",
+    "./story/branch-s2.json",
+    "./story/branch-e.json",
+    "./story/epilogue.json"
+  ]
+}

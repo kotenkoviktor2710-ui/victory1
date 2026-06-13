@@ -1,0 +1,15 @@
+/** Публичный API интеграции Yandex Games SDK для игр на этом шаблоне. */
+
+export * from '@/yandex/sdk'
+export * from '@/yandex/types'
+export * from '@/yandex/appReady'
+export * from '@/yandex/bootstrap'
+export * from '@/yandex/environment'
+export * from '@/yandex/leaderboard'
+export * from '@/yandex/payments'
+export * from '@/yandex/platformEvents'
+export * from '@/yandex/player'
+export * from '@/yandex/playerStorage'
+export * from '@/yandex/progressLifecycle'
+export * from '@/yandex/remoteConfig'
+export * from '@/yandex/reviewPrompt'

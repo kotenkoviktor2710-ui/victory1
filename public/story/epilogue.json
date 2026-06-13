@@ -1,0 +1,85 @@
+{
+  "scenes": {
+    "scene_epilogue": {
+      "id": "scene_epilogue",
+      "title": "Эпилог",
+      "backgroundKey": "BG_16",
+      "characterLayers": [],
+      "lines": [
+        {
+          "kind": "narration",
+          "text": "Квартира Артёма утром следующего дня. 08:12, но дата новая.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Артём просыпается. Телефон молчит. Будильник обычный.",
+          "thought": false
+        },
+        {
+          "kind": "narration",
+          "text": "Звонит Макс.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Ты живой?",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Да.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Прости. Просто привычка.",
+          "thought": false,
+          "speaker": "char_max"
+        },
+        {
+          "kind": "dialogue",
+          "text": "Понимаю.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Артём выходит на улицу. Город шумит. Кто-то роняет кофе. Автобус опаздывает. Люди спорят, смеются, спешат.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Наконец-то обычный день.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "На телефоне появляется последнее уведомление:\n\nСпасибо за доставку.",
+          "thought": false
+        },
+        {
+          "kind": "dialogue",
+          "text": "Даже не начинай.",
+          "thought": false,
+          "speaker": "char_artem"
+        },
+        {
+          "kind": "narration",
+          "text": "Конец.",
+          "thought": false
+        }
+      ],
+      "choices": [],
+      "actBreak": {
+        "enabled": true,
+        "title": "КОНЕЦ",
+        "backgroundKey": "BG_16"
+      },
+      "autoNextSceneId": null
+    }
+  }
+}

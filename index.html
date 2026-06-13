@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
@@ -6,64 +6,11 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <title>Последний День Курьера</title>
-    <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="css/fonts.css" />
-    <link rel="stylesheet" href="css/styles.css" />
-    <script>
-      document.addEventListener(
-        "contextmenu",
-        function (event) {
-          event.preventDefault();
-        },
-        true
-      );
-    </script>
+    <title>%VITE_APP_TITLE%</title>
+    <script src="/sdk.js"></script>
   </head>
   <body>
-    <div id="loader" class="loader">
-      <div class="loader__brand">
-        <span class="loader__brand-line">ПОСЛЕДНИЙ ДЕНЬ</span>
-        <span class="loader__brand-line">КУРЬЕРА</span>
-      </div>
-      <div class="loader-spinner" aria-hidden="true"></div>
-      <p class="loader__text">Загрузка...</p>
-    </div>
-
     <div id="app"></div>
-
-    <!-- SDK платформы: https://yandex.ru/dev/games/doc/ru/sdk/sdk-about -->
-    <script>
-      (function () {
-        function startApp() {
-          import("./js/app.js").catch(function (err) {
-            console.error("Не удалось загрузить приложение:", err);
-            var loader = document.getElementById("loader");
-            if (loader) {
-              loader.querySelector(".loader__text").textContent = "Ошибка загрузки. Обновите страницу.";
-            }
-          });
-        }
-
-        var host = location.hostname;
-        var isLocal = host === "localhost" || host === "127.0.0.1";
-
-        if (isLocal) {
-          startApp();
-          return;
-        }
-
-        var script = document.createElement("script");
-        script.src = "/sdk.js";
-        script.async = true;
-        script.onload = startApp;
-        script.onerror = function () {
-          console.warn("[SDK] Не удалось загрузить /sdk.js");
-          startApp();
-        };
-        document.body.appendChild(script);
-      })();
-    </script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
