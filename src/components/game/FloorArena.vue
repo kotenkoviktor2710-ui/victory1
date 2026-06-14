@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onUnmounted, ref, type ComponentPublicInstance } from 'vue'
+import { computed, onUnmounted, ref, type ComponentPublicInstance } from 'vue'
 
 import { clientToFieldPercent } from '@/domain/field'
 import type { PlacedToy } from '@/domain/types/toy'
@@ -42,10 +42,16 @@ let mergeBurstId = 0
 
 const fieldRef = ref<HTMLElement | null>(null)
 
+const LANDING_MS = 520
+const landingToyIds = ref<Record<string, true>>({})
+const landingTimers = new Map<string, number>()
 const tapReactingIds = ref<Record<string, true>>({})
 const tapReactTimers = new Map<string, number>()
 
-const { flights, launch } = usePurchaseFlight(() => {})
+const { flights, launch } = usePurchaseFlight((toy) => {
+  markToyLanding(toy.instanceId)
+  game.finalizePurchase(toy)
+})
 
 const {
   dragFromId,
@@ -79,8 +85,18 @@ const {
   },
 })
 
+const flightHiddenIds = computed(() => {
+  const ids = new Set<string>()
+  for (const active of flights.value) ids.add(active.toy.instanceId)
+  return ids
+})
+
 function isToyDragging(instanceId: string): boolean {
   return dragFromId.value === instanceId && isDragging.value
+}
+
+function isToyHidden(instanceId: string): boolean {
+  return flightHiddenIds.value.has(instanceId)
 }
 
 const FIELD_TOY_SIZE = 'clamp(140px, 36vw, 220px)'
@@ -93,12 +109,33 @@ function wobbleDelay(instanceId: string): number {
   return (hash / 100) * 2.4
 }
 
+function isToyLanding(instanceId: string): boolean {
+  return landingToyIds.value[instanceId] === true
+}
+
+function markToyLanding(instanceId: string): void {
+  const prev = landingTimers.get(instanceId)
+  if (prev != null) window.clearTimeout(prev)
+
+  landingToyIds.value = { ...landingToyIds.value, [instanceId]: true }
+  const timer = window.setTimeout(() => {
+    landingTimers.delete(instanceId)
+    const next = { ...landingToyIds.value }
+    delete next[instanceId]
+    landingToyIds.value = next
+  }, LANDING_MS)
+  landingTimers.set(instanceId, timer)
+}
+
 function isToyIdle(instanceId: string): boolean {
-  return lastMergedId.value !== instanceId
+  return (
+    !flightHiddenIds.value.has(instanceId) &&
+    !isToyLanding(instanceId) &&
+    lastMergedId.value !== instanceId
+  )
 }
 
 function launchToy(toy: PlacedToy, fromRect: DOMRect, fieldRect: DOMRect): void {
-  game.finalizePurchase(toy)
   launch(toy, fromRect, fieldRect)
 }
 
@@ -238,6 +275,8 @@ function grantRandomToyWithFlight(fromRect: DOMRect): boolean {
 }
 
 onUnmounted(() => {
+  for (const timer of landingTimers.values()) window.clearTimeout(timer)
+  landingTimers.clear()
   for (const timer of tapReactTimers.values()) window.clearTimeout(timer)
   tapReactTimers.clear()
 })
@@ -262,8 +301,10 @@ defineExpose({ purchaseToy, purchaseShopToy, grantToyWithFlight, grantRandomToyW
         type="button"
         class="floor-arena__toy"
         :class="{
+          'floor-arena__toy--hidden': isToyHidden(toy.instanceId),
           'floor-arena__toy--dragging': isToyDragging(toy.instanceId),
           'floor-arena__toy--idle': isToyIdle(toy.instanceId),
+          'floor-arena__toy--landing': isToyLanding(toy.instanceId),
           'floor-arena__toy--tap': isToyTapReacting(toy.instanceId),
           'floor-arena__toy--merged': lastMergedId === toy.instanceId,
         }"
@@ -382,6 +423,12 @@ defineExpose({ purchaseToy, purchaseShopToy, grantToyWithFlight, grantRandomToyW
   touch-action: none;
 }
 
+.floor-arena__toy--hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .floor-arena__toy--dragging {
   opacity: 0.34;
   pointer-events: none;
@@ -390,6 +437,15 @@ defineExpose({ purchaseToy, purchaseShopToy, grantToyWithFlight, grantRandomToyW
 
 .floor-arena__toy--dragging :deep(.toy-sprite__img) {
   filter: grayscale(0.12);
+}
+
+.floor-arena__toy--landing {
+  pointer-events: none;
+}
+
+.floor-arena__toy--landing :deep(.toy-sprite__img) {
+  animation: none;
+  transform: rotate(0deg) translateY(0);
 }
 
 .floor-arena__toy--idle :deep(.toy-sprite__img) {
