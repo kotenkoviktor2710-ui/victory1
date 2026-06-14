@@ -2,7 +2,6 @@
 import GameModal from '@/components/game/GameModal.vue'
 import ToySprite from '@/components/game/ToySprite.vue'
 import { formatNumber } from '@/domain/formulas/economy'
-import { RARITY_COLORS, RARITY_LABELS } from '@/domain/constants'
 import { useGameStore } from '@/stores/gameStore'
 
 defineProps<{
@@ -16,44 +15,57 @@ const emit = defineEmits<{
 
 const game = useGameStore()
 
+function canBuy(definitionId: string): boolean {
+  return game.coins >= game.getPurchaseCost(definitionId) && game.canAddToy()
+}
+
 function buy(definitionId: string, event: MouseEvent): void {
+  if (!canBuy(definitionId)) return
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
   emit('buy', definitionId, rect)
 }
 </script>
 
 <template>
-  <GameModal v-if="open" title="Коллекция" @close="emit('close')">
-    <p class="game-modal-hint">
-      Купи игрушки и объединяй любые две одного уровня на поле. Собрано merge: {{ game.totalMerges }}
-    </p>
-    <div class="collection-modal__grid">
-      <button
-        v-for="toy in game.catalog"
-        :key="toy.id"
-        type="button"
-        class="game-modal-chip game-modal-chip--card"
-        :disabled="game.coins < game.getPurchaseCost(toy.id) || !game.canAddToy()"
-        @click="buy(toy.id, $event)"
-      >
-        <ToySprite :definition-id="toy.id" :level="1" size="56px" />
-        <span class="game-modal-chip__meta">{{ toy.name }}</span>
-        <span
-          class="game-modal-chip__meta"
-          :style="{ color: RARITY_COLORS[toy.rarity] }"
+  <GameModal v-if="open" picker title="Коллекция" @close="emit('close')">
+    <template #subtitle>
+      <p class="game-modal__subtitle game-text-stroke">
+        Слияний: {{ game.totalMerges }}
+      </p>
+    </template>
+
+    <div class="game-modal-picker__scroll">
+      <div class="game-modal-picker__grid">
+        <button
+          v-for="toy in game.catalog"
+          :key="toy.id"
+          type="button"
+          class="game-modal-picker__item"
+          :disabled="!canBuy(toy.id)"
+          @click="buy(toy.id, $event)"
         >
-          {{ RARITY_LABELS[toy.rarity] }}
-        </span>
-        <span class="game-modal-chip__accent">🪙 {{ formatNumber(game.getPurchaseCost(toy.id)) }}</span>
+          <div class="game-modal-picker__hero">
+            <ToySprite
+              :definition-id="toy.id"
+              :level="1"
+              size="clamp(64px, 12vw, 96px)"
+            />
+          </div>
+          <span class="game-modal-picker__value game-text-stroke">
+            {{ formatNumber(game.getPurchaseCost(toy.id)) }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="game-modal-picker__actions game-modal-picker__actions--single">
+      <button
+        type="button"
+        class="game-sketch-btn game-sketch-btn--red game-modal-picker__action game-text-stroke"
+        @click="emit('close')"
+      >
+        Закрыть
       </button>
     </div>
   </GameModal>
 </template>
-
-<style scoped>
-.collection-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-</style>

@@ -26,14 +26,17 @@ const emit = defineEmits<{
     >
       <header class="game-modal__header">
         <h2 class="game-modal__title game-text-stroke">{{ title }}</h2>
-        <button
-          type="button"
-          class="game-sketch-btn game-sketch-btn--red game-sketch-btn--sm game-modal__close"
-          aria-label="Закрыть"
-          @click="emit('close')"
-        >
-          ✕
-        </button>
+        <div class="game-modal__header-actions">
+          <slot name="subtitle" />
+          <button
+            type="button"
+            class="game-sketch-btn game-sketch-btn--red game-sketch-btn--sm game-modal__close"
+            aria-label="Закрыть"
+            @click="emit('close')"
+          >
+            ✕
+          </button>
+        </div>
       </header>
       <div class="game-modal__body">
         <slot />
