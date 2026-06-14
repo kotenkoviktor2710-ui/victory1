@@ -39,7 +39,7 @@ function todayKey(): string {
 
 function defaultSave(): GameSave {
   return {
-    coins: 100,
+    coins: 75,
     gems: 5,
     board: [],
     purchaseCounts: {},
@@ -64,7 +64,7 @@ function defaultSave(): GameSave {
 }
 
 export const useGameStore = defineStore('game', () => {
-  const coins = ref(100)
+  const coins = ref(75)
   const gems = ref(5)
   const board = ref<PlacedToy[]>([])
   const pendingToys = ref<PlacedToy[]>([])
@@ -182,8 +182,12 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
+  function getTotalPurchaseCount(): number {
+    return Object.values(purchaseCounts.value).reduce((sum, count) => sum + count, 0)
+  }
+
   function getPurchaseCost(_definitionId: string, level = 1): number {
-    return getPurchaseCostByLevel(level)
+    return getPurchaseCostByLevel(level, maxBoardLevel.value, getTotalPurchaseCount())
   }
 
   function beginPurchase(definitionId: string, level = 1): PendingPurchase | null {
@@ -194,6 +198,11 @@ export const useGameStore = defineStore('game', () => {
     if (coins.value < cost) return null
 
     coins.value -= cost
+
+    purchaseCounts.value = {
+      ...purchaseCounts.value,
+      [definitionId]: (purchaseCounts.value[definitionId] ?? 0) + 1,
+    }
 
     const toy = createPlacedToy(definitionId, level)
     trackPendingToy(toy)
