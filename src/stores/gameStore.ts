@@ -374,9 +374,8 @@ export const useGameStore = defineStore('game', () => {
     return true
   }
 
-  function recordPvpResult(won: boolean, ratingDelta: number, coinReward: number): void {
+  function recordPvpStats(won: boolean, ratingDelta: number): void {
     pvpRating.value = Math.max(0, pvpRating.value + ratingDelta)
-    coins.value += coinReward
     if (won) {
       pvpWins.value += 1
       questProgress.value.dailyPvpWins += 1
@@ -384,6 +383,11 @@ export const useGameStore = defineStore('game', () => {
       pvpLosses.value += 1
     }
     updatePvpRank()
+  }
+
+  function recordPvpResult(won: boolean, ratingDelta: number, coinReward: number): void {
+    recordPvpStats(won, ratingDelta)
+    addCoins(coinReward)
   }
 
   function updatePvpRank(): void {
@@ -567,6 +571,7 @@ export const useGameStore = defineStore('game', () => {
     addGems,
     spendGems,
     recordPvpResult,
+    recordPvpStats,
     openChest,
     resetDailyQuestsIfNeeded,
     claimQuestReward,

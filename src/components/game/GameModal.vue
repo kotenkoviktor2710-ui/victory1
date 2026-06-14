@@ -1,7 +1,15 @@
 <script setup lang="ts">
-defineProps<{
-  title: string
-}>()
+withDefaults(
+  defineProps<{
+    title: string
+    wide?: boolean
+    picker?: boolean
+  }>(),
+  {
+    wide: false,
+    picker: false,
+  },
+)
 
 const emit = defineEmits<{
   close: []
@@ -10,10 +18,20 @@ const emit = defineEmits<{
 
 <template>
   <div class="game-modal-overlay" @click.self="emit('close')">
-    <div class="game-modal" role="dialog" aria-modal="true">
+    <div
+      class="game-modal"
+      :class="{ 'game-modal--wide': wide, 'game-modal--picker': picker }"
+      role="dialog"
+      aria-modal="true"
+    >
       <header class="game-modal__header">
-        <h2 class="game-modal__title">{{ title }}</h2>
-        <button type="button" class="game-modal__close" aria-label="Закрыть" @click="emit('close')">
+        <h2 class="game-modal__title game-text-stroke">{{ title }}</h2>
+        <button
+          type="button"
+          class="game-sketch-btn game-sketch-btn--red game-sketch-btn--sm game-modal__close"
+          aria-label="Закрыть"
+          @click="emit('close')"
+        >
           ✕
         </button>
       </header>

@@ -21,6 +21,30 @@ export interface CombatLogEntry {
   isCrit: boolean
 }
 
+export interface BattleAction {
+  attackerId: string
+  targetId: string
+  damage: number
+  isCrit: boolean
+}
+
+export interface BattleRosterEntry {
+  unitId: string
+  definitionId: string
+  level: number
+}
+
+export interface BattleSnapshot {
+  winner: 'player' | 'enemy'
+  playerUnits: CombatUnit[]
+  enemyUnits: CombatUnit[]
+  playerRoster: BattleRosterEntry[]
+  enemyRoster: BattleRosterEntry[]
+  actions: BattleAction[]
+  coinReward: number
+  ratingDelta: number
+}
+
 export interface BattleResult {
   winner: 'player' | 'enemy'
   log: CombatLogEntry[]
@@ -57,11 +81,36 @@ export function calcTeamPower(definitions: { definition: ToyDefinition; level: n
   }, 0)
 }
 
-export function simulateBattle(
+function buildBattleRewards(
+  winner: 'player' | 'enemy',
+  playerTeamSize: number,
+): { coinReward: number; ratingDelta: number } {
+  return {
+    coinReward: winner === 'player' ? 150 + playerTeamSize * 30 : 25,
+    ratingDelta: winner === 'player' ? 25 : -10,
+  }
+}
+
+function actionToLogEntry(
+  playerUnits: CombatUnit[],
+  enemyUnits: CombatUnit[],
+  action: BattleAction,
+): CombatLogEntry {
+  const attacker = [...playerUnits, ...enemyUnits].find((unit) => unit.id === action.attackerId)
+  const target = [...playerUnits, ...enemyUnits].find((unit) => unit.id === action.targetId)
+  return {
+    attackerName: attacker?.name ?? action.attackerId,
+    targetName: target?.name ?? action.targetId,
+    damage: action.damage,
+    isCrit: action.isCrit,
+  }
+}
+
+export function simulateBattleDetailed(
   playerTeam: { definition: ToyDefinition; level: number }[],
   enemyTeam: { definition: ToyDefinition; level: number }[],
-): BattleResult {
-  const log: CombatLogEntry[] = []
+): BattleSnapshot {
+  const actions: BattleAction[] = []
   const playerUnits = playerTeam.map((t, i) => toCombatUnit(t.definition, t.level, `p${i}`))
   const enemyUnits = enemyTeam.map((t, i) => toCombatUnit(t.definition, t.level, `e${i}`))
 
@@ -92,9 +141,9 @@ export function simulateBattle(
       const { damage, isCrit } = rollDamage(actor.unit)
       target.health = Math.max(0, target.health - damage)
 
-      log.push({
-        attackerName: actor.unit.name,
-        targetName: target.name,
+      actions.push({
+        attackerId: actor.unit.id,
+        targetId: target.id,
         damage,
         isCrit,
       })
@@ -107,13 +156,43 @@ export function simulateBattle(
 
   const playerAlive = playerUnits.some((u) => u.health > 0)
   const winner = playerAlive ? 'player' : 'enemy'
+  const rewards = buildBattleRewards(winner, playerTeam.length)
 
   return {
     winner,
-    log: log.slice(-8),
-    coinReward: winner === 'player' ? 150 + playerTeam.length * 30 : 25,
-    ratingDelta: winner === 'player' ? 25 : -10,
+    playerUnits,
+    enemyUnits,
+    playerRoster: playerTeam.map((t, i) => ({
+      unitId: `p${i}`,
+      definitionId: t.definition.id,
+      level: t.level,
+    })),
+    enemyRoster: enemyTeam.map((t, i) => ({
+      unitId: `e${i}`,
+      definitionId: t.definition.id,
+      level: t.level,
+    })),
+    actions,
+    ...rewards,
   }
+}
+
+export function snapshotToBattleResult(snapshot: BattleSnapshot): BattleResult {
+  return {
+    winner: snapshot.winner,
+    log: snapshot.actions.slice(-8).map((action) =>
+      actionToLogEntry(snapshot.playerUnits, snapshot.enemyUnits, action),
+    ),
+    coinReward: snapshot.coinReward,
+    ratingDelta: snapshot.ratingDelta,
+  }
+}
+
+export function simulateBattle(
+  playerTeam: { definition: ToyDefinition; level: number }[],
+  enemyTeam: { definition: ToyDefinition; level: number }[],
+): BattleResult {
+  return snapshotToBattleResult(simulateBattleDetailed(playerTeam, enemyTeam))
 }
 
 export function generateEnemyTeam(

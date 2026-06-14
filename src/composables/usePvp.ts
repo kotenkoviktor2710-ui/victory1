@@ -1,14 +1,22 @@
 import { computed, ref } from 'vue'
 
 import { TOY_BY_ID } from '@/domain/data/toys'
-import { calcTeamPower, generateEnemyTeam, simulateBattle } from '@/domain/formulas/combat'
-import type { BattleResult } from '@/domain/formulas/combat'
+import {
+  calcTeamPower,
+  generateEnemyTeam,
+  simulateBattle,
+  simulateBattleDetailed,
+  snapshotToBattleResult,
+} from '@/domain/formulas/combat'
+import type { BattleResult, BattleSnapshot } from '@/domain/formulas/combat'
 import { useGameStore } from '@/stores/gameStore'
+
+const lastBattle = ref<BattleResult | null>(null)
+const enemyTeam = ref<ReturnType<typeof generateEnemyTeam>>([])
+const activeSnapshot = ref<BattleSnapshot | null>(null)
 
 export function usePvp() {
   const game = useGameStore()
-  const lastBattle = ref<BattleResult | null>(null)
-  const enemyTeam = ref<ReturnType<typeof generateEnemyTeam>>([])
 
   const playerTeam = computed(() =>
     game.teamInstanceIds
@@ -26,14 +34,46 @@ export function usePvp() {
 
   const canBattle = computed(() => playerTeam.value.length > 0)
 
-  function startBattle(): BattleResult | null {
+  function prepareBattle(): BattleSnapshot | null {
     if (!canBattle.value) return null
 
     enemyTeam.value = generateEnemyTeam(teamPower.value, game.catalog)
-    const result = simulateBattle(playerTeam.value, enemyTeam.value)
-    lastBattle.value = result
-    game.recordPvpResult(result.winner === 'player', result.ratingDelta, result.coinReward)
-    return result
+    const snapshot = simulateBattleDetailed(playerTeam.value, enemyTeam.value)
+    activeSnapshot.value = snapshot
+    return snapshot
+  }
+
+  function finalizeBattleStats(snapshot: BattleSnapshot): void {
+    lastBattle.value = snapshotToBattleResult(snapshot)
+    game.recordPvpStats(snapshot.winner === 'player', snapshot.ratingDelta)
+    activeSnapshot.value = null
+  }
+
+  function claimBattleReward(amount: number): void {
+    game.addCoins(amount)
+    if (lastBattle.value) {
+      lastBattle.value = {
+        ...lastBattle.value,
+        coinReward: amount,
+      }
+    }
+  }
+
+  function completeBattle(snapshot: BattleSnapshot): void {
+    finalizeBattleStats(snapshot)
+    claimBattleReward(snapshot.coinReward)
+  }
+
+  function clearBattleState(): void {
+    lastBattle.value = null
+    activeSnapshot.value = null
+  }
+
+  function startBattle(): BattleResult | null {
+    const snapshot = prepareBattle()
+    if (!snapshot) return null
+    completeBattle(snapshot)
+    return lastBattle.value
   }
 
   return {
@@ -42,6 +82,12 @@ export function usePvp() {
     canBattle,
     lastBattle,
     enemyTeam,
+    activeSnapshot,
+    prepareBattle,
+    finalizeBattleStats,
+    claimBattleReward,
+    completeBattle,
+    clearBattleState,
     startBattle,
   }
 }

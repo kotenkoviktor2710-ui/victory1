@@ -24,7 +24,7 @@ function buy(definitionId: string, event: MouseEvent): void {
 
 <template>
   <GameModal v-if="open" title="Коллекция" @close="emit('close')">
-    <p class="collection-modal__hint">
+    <p class="game-modal-hint">
       Купи игрушки и объединяй любые две одного уровня на поле. Собрано merge: {{ game.totalMerges }}
     </p>
     <div class="collection-modal__grid">
@@ -32,70 +32,28 @@ function buy(definitionId: string, event: MouseEvent): void {
         v-for="toy in game.catalog"
         :key="toy.id"
         type="button"
-        class="collection-modal__item"
+        class="game-modal-chip game-modal-chip--card"
         :disabled="game.coins < game.getPurchaseCost(toy.id) || !game.canAddToy()"
         @click="buy(toy.id, $event)"
       >
         <ToySprite :definition-id="toy.id" :level="1" size="56px" />
-        <span class="collection-modal__name">{{ toy.name }}</span>
+        <span class="game-modal-chip__meta">{{ toy.name }}</span>
         <span
-          class="collection-modal__rarity"
+          class="game-modal-chip__meta"
           :style="{ color: RARITY_COLORS[toy.rarity] }"
         >
           {{ RARITY_LABELS[toy.rarity] }}
         </span>
-        <span class="collection-modal__cost">🪙 {{ formatNumber(game.getPurchaseCost(toy.id)) }}</span>
+        <span class="game-modal-chip__accent">🪙 {{ formatNumber(game.getPurchaseCost(toy.id)) }}</span>
       </button>
     </div>
   </GameModal>
 </template>
 
 <style scoped>
-.collection-modal__hint {
-  margin: 0 0 12px;
-  font-size: 12px;
-  font-weight: 800;
-  opacity: 0.7;
-}
-
 .collection-modal__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-}
-
-.collection-modal__item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 8px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  color: #fff;
-  cursor: pointer;
-  text-align: center;
-}
-
-.collection-modal__item:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.collection-modal__name {
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.collection-modal__rarity {
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.collection-modal__cost {
-  font-size: 11px;
-  color: #ffd54a;
-  font-weight: 900;
 }
 </style>

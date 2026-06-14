@@ -4,14 +4,22 @@ import { ref } from 'vue'
 import BottomActionBar from '@/components/game/BottomActionBar.vue'
 import CollectionModal from '@/components/game/CollectionModal.vue'
 import FloorArena from '@/components/game/FloorArena.vue'
+import PvpBattleScreen from '@/components/game/PvpBattleScreen.vue'
 import PvpModal from '@/components/game/PvpModal.vue'
+import PvpRewardModal from '@/components/game/PvpRewardModal.vue'
 import SideShopPanel from '@/components/game/SideShopPanel.vue'
 import ToyAcquireModal from '@/components/game/ToyAcquireModal.vue'
 import TopHud from '@/components/game/TopHud.vue'
+import { usePvp } from '@/composables/usePvp'
+import type { BattleSnapshot } from '@/domain/formulas/combat'
 import { showRewarded } from '@/ads/ads'
+
 const arenaRef = ref<InstanceType<typeof FloorArena> | null>(null)
 const showCollection = ref(false)
 const showPvp = ref(false)
+const battleSnapshot = ref<BattleSnapshot | null>(null)
+const rewardSnapshot = ref<BattleSnapshot | null>(null)
+const pvp = usePvp()
 
 function onShopBuy(fromRect: DOMRect): void {
   arenaRef.value?.purchaseShopToy(fromRect)
@@ -30,6 +38,26 @@ function onFreeToys(fromRect: DOMRect): void {
     arenaRef.value?.grantRandomToyWithFlight(fromRect)
   })
 }
+
+function onStartBattle(): void {
+  const snapshot = pvp.prepareBattle()
+  if (!snapshot) return
+  battleSnapshot.value = snapshot
+  showPvp.value = false
+}
+
+function onBattleFinished(): void {
+  if (!battleSnapshot.value) return
+  pvp.finalizeBattleStats(battleSnapshot.value)
+  rewardSnapshot.value = battleSnapshot.value
+  battleSnapshot.value = null
+}
+
+function onRewardClaimed(amount: number): void {
+  pvp.claimBattleReward(amount)
+  rewardSnapshot.value = null
+  showPvp.value = true
+}
 </script>
 
 <template>
@@ -47,7 +75,22 @@ function onFreeToys(fromRect: DOMRect): void {
     <BottomActionBar @attack="showPvp = true" />
 
     <CollectionModal :open="showCollection" @buy="onCollectionBuy" @close="showCollection = false" />
-    <PvpModal :open="showPvp" @close="showPvp = false" />
+    <PvpModal
+      :open="showPvp"
+      @close="showPvp = false"
+      @start-battle="onStartBattle"
+    />
+    <PvpBattleScreen
+      v-if="battleSnapshot"
+      :snapshot="battleSnapshot"
+      @finished="onBattleFinished"
+    />
+    <PvpRewardModal
+      v-if="rewardSnapshot"
+      :won="rewardSnapshot.winner === 'player'"
+      :base-reward="rewardSnapshot.coinReward"
+      @claim="onRewardClaimed"
+    />
     <ToyAcquireModal />
   </div>
 </template>
