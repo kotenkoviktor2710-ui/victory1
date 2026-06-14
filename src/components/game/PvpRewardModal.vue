@@ -19,13 +19,7 @@ const claimed = ref(false)
 
 const bonusReward = computed(() => Math.round(props.baseReward * multiplier.value))
 
-const multiplierMarks = [1, 2, 3, 4, 5]
-
-function markPosition(mark: number): number {
-  if (mark === 5) return 50
-  if (mark === 1) return 4
-  return (mark - 1) * 22
-}
+const multiplierMarks = [1, 2, 3, 4, 5] as const
 
 function finishClaim(amount: number, mult: number): void {
   if (claimed.value) return
@@ -66,17 +60,17 @@ function onSkip(): void {
         <span class="pvp-reward__live-mult game-text-stroke">x{{ multiplier }}</span>
 
         <div class="pvp-reward__slider">
-          <div class="pvp-reward__slider-track">
+          <div class="pvp-reward__marks" aria-hidden="true">
             <span
               v-for="mark in multiplierMarks"
               :key="mark"
-              class="pvp-reward__mark"
+              class="pvp-reward__mark game-text-stroke"
               :class="{ 'pvp-reward__mark--peak': mark === 5 }"
-              :style="{ left: `${markPosition(mark)}%` }"
             >
               x{{ mark }}
             </span>
           </div>
+          <div class="pvp-reward__slider-track" />
           <span
             class="pvp-reward__thumb"
             :style="{ left: `${position}%` }"
@@ -102,7 +96,7 @@ function onSkip(): void {
         :disabled="claimed"
         @click="onSkip"
       >
-        Не надо · {{ formatNumber(baseReward) }}
+        Не надо
       </button>
     </div>
   </div>
@@ -183,42 +177,43 @@ function onSkip(): void {
 .pvp-reward__slider-wrap {
   position: relative;
   width: 100%;
+  padding-top: 40px;
   margin-bottom: 22px;
 }
 
 .pvp-reward__live-mult {
-  display: inline-block;
-  margin-bottom: 10px;
-  font-size: clamp(22px, 5.8vw, 30px);
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: clamp(24px, 6.4vw, 34px);
   color: #ffe566;
+  line-height: 1;
 }
 
 .pvp-reward__slider {
   position: relative;
-  height: 34px;
+  height: 44px;
+  padding-top: 22px;
 }
 
-.pvp-reward__slider-track {
+.pvp-reward__marks {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 16px;
-  transform: translateY(-50%);
-  border: 3px solid var(--game-ink);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12);
-  overflow: visible;
+  left: 14px;
+  right: 14px;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
 }
 
 .pvp-reward__mark {
-  position: absolute;
-  top: -28px;
-  transform: translateX(-50%);
+  flex: 1;
+  text-align: center;
   font-size: 11px;
   font-weight: var(--game-font-weight);
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.82);
   white-space: nowrap;
 }
 
@@ -227,9 +222,22 @@ function onSkip(): void {
   font-size: 12px;
 }
 
+.pvp-reward__slider-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 22px;
+  height: 16px;
+  border: 3px solid var(--game-ink);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
 .pvp-reward__thumb {
   position: absolute;
-  top: 50%;
+  top: calc(22px + 8px);
+  z-index: 2;
   width: 28px;
   height: 28px;
   border: 3px solid var(--game-ink);

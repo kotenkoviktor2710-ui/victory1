@@ -95,6 +95,47 @@ export interface YsdkLeaderboardEntry {
   }
 }
 
+export interface YsdkMultiplayerSessionTimelineEntry {
+  id: string
+  payload?: unknown
+  time: number
+}
+
+export interface YsdkMultiplayerSession {
+  id: string
+  meta?: {
+    meta1?: number
+    meta2?: number
+    meta3?: number
+  }
+  player?: {
+    avatar?: string
+    name?: string
+  }
+  timeline?: YsdkMultiplayerSessionTimelineEntry[]
+}
+
+export interface YsdkMultiplayerSessionsInitOptions {
+  count?: number
+  isEventBased?: boolean
+  maxOpponentTurnTime?: number
+  meta?: {
+    meta1?: { min: number; max: number }
+    meta2?: { min: number; max: number }
+    meta3?: { min: number; max: number }
+  }
+}
+
+export interface YsdkMultiplayerSessions {
+  init(options?: YsdkMultiplayerSessionsInitOptions): Promise<YsdkMultiplayerSession[]>
+  commit(payload: Record<string, unknown>): void
+  push(meta: { meta1?: number; meta2?: number; meta3?: number }): Promise<void>
+}
+
+export interface YsdkMultiplayer {
+  sessions: YsdkMultiplayerSessions
+}
+
 export interface YsdkLeaderboards {
   setScore(leaderboardName: string, score: number, extraData?: string): Promise<void>
   getEntries(
@@ -136,6 +177,7 @@ export interface Ysdk {
   auth?: YsdkAuth
   payments?: YsdkPayments
   leaderboards?: YsdkLeaderboards
+  multiplayer?: YsdkMultiplayer
   deviceInfo?: YsdkDeviceInfo
   features?: {
     LoadingAPI?: { ready: () => void }

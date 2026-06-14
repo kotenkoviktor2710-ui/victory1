@@ -163,12 +163,12 @@ export function simulateBattleDetailed(
     playerUnits,
     enemyUnits,
     playerRoster: playerTeam.map((t, i) => ({
-      unitId: `p${i}`,
+      unitId: playerUnits[i]!.id,
       definitionId: t.definition.id,
       level: t.level,
     })),
     enemyRoster: enemyTeam.map((t, i) => ({
-      unitId: `e${i}`,
+      unitId: enemyUnits[i]!.id,
       definitionId: t.definition.id,
       level: t.level,
     })),

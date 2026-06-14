@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { showRewarded } from '@/ads/ads'
 import ToySprite from '@/components/game/ToySprite.vue'
 import { formatNumber } from '@/domain/formulas/economy'
+import { assetUrl } from '@/shared/utils/assetUrl'
 import { useGameStore } from '@/stores/gameStore'
 
 const emit = defineEmits<{
@@ -55,7 +56,7 @@ function onRewardedAd(): void {
       <div class="game-side-card__frame">
         <div class="game-side-card__ribbon game-side-card__ribbon--shop">
           <span class="game-side-card__ribbon-text game-text-stroke">{{ formatNumber(shopCost) }}</span>
-          <img class="game-side-card__ribbon-icon" src="/images/moneta.png" alt="" aria-hidden="true" />
+          <img class="game-side-card__ribbon-icon" :src="assetUrl('images/moneta.png')" alt="" aria-hidden="true" />
         </div>
         <div class="game-side-card__stage game-side-card__stage--shop">
           <div class="game-side-card__body">
@@ -77,7 +78,7 @@ function onRewardedAd(): void {
       <div class="game-side-card__frame">
         <div class="game-side-card__ribbon game-side-card__ribbon--ad">
           <span class="game-side-card__ribbon-text game-text-stroke">Реклама</span>
-          <img class="game-side-card__ribbon-icon" src="/images/ads.png" alt="" aria-hidden="true" />
+          <img class="game-side-card__ribbon-icon" :src="assetUrl('images/ads.png')" alt="" aria-hidden="true" />
         </div>
         <div class="game-side-card__stage game-side-card__stage--ad">
           <div class="game-side-card__body">

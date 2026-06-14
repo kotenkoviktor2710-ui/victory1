@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
 
-import ToySprite from '@/components/game/ToySprite.vue'
-import { formatNumber } from '@/domain/formulas/economy'
+import BattleFighterCard from '@/components/game/BattleFighterCard.vue'
 import type { BattleSnapshot } from '@/domain/formulas/combat'
 import { useBattlePlayback } from '@/composables/useBattlePlayback'
+import { assetUrl } from '@/shared/utils/assetUrl'
+
+const BATTLE_TOY_SIZE = 'clamp(100px, 18vmin, 180px)'
+const VERTICAL_FIGHTER_LIMIT = 3
+/** sword.png: рукоять сверху, остриё снизу — выравниваем остриём по вектору полёта */
+const SWORD_FLIGHT_OFFSET_DEG = -90
+const battleBg = assetUrl('images/fight.png')
+const battleSword = assetUrl('images/sword.png')
 
 const props = defineProps<{
   snapshot: BattleSnapshot
@@ -18,6 +25,7 @@ const {
   activeAttackerId,
   activeTargetId,
   hitTargetId,
+  flyingProjectile,
   damageFloats,
   phase,
   healthPercent,
@@ -25,8 +33,72 @@ const {
   start,
 } = useBattlePlayback(props.snapshot)
 
+const arenaRef = ref<HTMLElement | null>(null)
+const fighterAnchors = ref<Record<string, Element | null>>({})
+
+interface ProjectilePoint {
+  x: number
+  y: number
+}
+
+const projectilePoints = ref<{
+  from: ProjectilePoint
+  to: ProjectilePoint
+  angle: number
+} | null>(null)
+
 const playerRoster = computed(() => props.snapshot.playerRoster)
 const enemyRoster = computed(() => props.snapshot.enemyRoster)
+
+function formationSlotClass(index: number): string {
+  if (index < VERTICAL_FIGHTER_LIMIT) {
+    return `battle-screen__formation-slot--main-${index + 1}`
+  }
+  return `battle-screen__formation-slot--between-${index - VERTICAL_FIGHTER_LIMIT + 1}`
+}
+
+function setFighterRef(unitId: string, el: Element | ComponentPublicInstance | null): void {
+  fighterAnchors.value[unitId] = el instanceof Element ? el : null
+}
+
+function anchorCenter(unitId: string): ProjectilePoint | null {
+  const arena = arenaRef.value
+  const node = fighterAnchors.value[unitId]
+  if (!arena || !node) return null
+
+  const sprite = node.querySelector('.battle-fighter__sprite-wrap')
+  const anchor = sprite ?? node
+  const arenaRect = arena.getBoundingClientRect()
+  const nodeRect = anchor.getBoundingClientRect()
+  return {
+    x: nodeRect.left + nodeRect.width / 2 - arenaRect.left,
+    y: nodeRect.top + nodeRect.height * 0.45 - arenaRect.top,
+  }
+}
+
+async function updateProjectilePoints(): Promise<void> {
+  const projectile = flyingProjectile.value
+  if (!projectile) {
+    projectilePoints.value = null
+    return
+  }
+
+  await nextTick()
+  const from = anchorCenter(projectile.attackerId)
+  const to = anchorCenter(projectile.targetId)
+  if (!from || !to) {
+    projectilePoints.value = null
+    return
+  }
+
+  const flightAngleDeg = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI
+  const angle = flightAngleDeg + SWORD_FLIGHT_OFFSET_DEG
+  projectilePoints.value = { from, to, angle }
+}
+
+watch(flyingProjectile, () => {
+  void updateProjectilePoints()
+})
 
 function damagesFor(unitId: string) {
   return damageFloats.value.filter((entry) => entry.unitId === unitId)
@@ -34,12 +106,12 @@ function damagesFor(unitId: string) {
 
 function fighterClass(unitId: string, side: 'player' | 'enemy'): Record<string, boolean> {
   return {
-    'battle-screen__fighter--attacking': activeAttackerId.value === unitId,
-    'battle-screen__fighter--target': activeTargetId.value === unitId,
-    'battle-screen__fighter--hit': hitTargetId.value === unitId,
-    'battle-screen__fighter--down': !isAlive(unitId),
-    'battle-screen__fighter--player': side === 'player',
-    'battle-screen__fighter--enemy': side === 'enemy',
+    'battle-fighter--attacking': activeAttackerId.value === unitId,
+    'battle-fighter--target': activeTargetId.value === unitId,
+    'battle-fighter--hit': hitTargetId.value === unitId,
+    'battle-fighter--down': !isAlive(unitId),
+    'battle-fighter--player': side === 'player',
+    'battle-fighter--enemy': side === 'enemy',
   }
 }
 
@@ -54,75 +126,67 @@ onMounted(() => {
 
 <template>
   <div class="battle-screen">
-    <div class="battle-screen__bg" aria-hidden="true" />
+    <div class="battle-screen__bg" :style="{ backgroundImage: `url(${battleBg})` }" aria-hidden="true" />
     <div class="battle-screen__shade" aria-hidden="true" />
 
-    <div class="battle-screen__arena">
+    <div ref="arenaRef" class="battle-screen__arena">
       <section class="battle-screen__team battle-screen__team--player">
-        <div
-          v-for="entry in playerRoster"
-          :key="entry.unitId"
-          class="battle-screen__fighter"
-          :class="fighterClass(entry.unitId, 'player')"
-        >
-          <div class="battle-screen__hp">
-            <div
-              class="battle-screen__hp-fill battle-screen__hp-fill--ally"
-              :style="{ width: `${healthPercent(entry.unitId)}%` }"
+        <div class="battle-screen__formation">
+          <div
+            v-for="(entry, index) in playerRoster"
+            :key="entry.unitId"
+            :ref="(el) => setFighterRef(entry.unitId, el)"
+            class="battle-screen__formation-slot"
+            :class="formationSlotClass(index)"
+          >
+            <BattleFighterCard
+              :entry="entry"
+              side="player"
+              :toy-size="BATTLE_TOY_SIZE"
+              :health-percent="healthPercent(entry.unitId)"
+              :damages="damagesFor(entry.unitId)"
+              :fighter-class="fighterClass(entry.unitId, 'player')"
             />
-          </div>
-          <div class="battle-screen__sprite-wrap">
-            <ToySprite
-              :definition-id="entry.definitionId"
-              :level="entry.level"
-              size="clamp(72px, 16vw, 108px)"
-            />
-            <span
-              v-for="dmg in damagesFor(entry.unitId)"
-              :key="dmg.id"
-              class="battle-screen__damage game-text-stroke"
-              :class="{ 'battle-screen__damage--crit': dmg.isCrit }"
-            >
-              -{{ formatNumber(dmg.amount) }}
-            </span>
           </div>
         </div>
       </section>
-
-      <div class="battle-screen__center" aria-hidden="true">
-        <span class="battle-screen__vs game-text-stroke">VS</span>
-      </div>
 
       <section class="battle-screen__team battle-screen__team--enemy">
-        <div
-          v-for="entry in enemyRoster"
-          :key="entry.unitId"
-          class="battle-screen__fighter"
-          :class="fighterClass(entry.unitId, 'enemy')"
-        >
-          <div class="battle-screen__hp">
-            <div
-              class="battle-screen__hp-fill battle-screen__hp-fill--enemy"
-              :style="{ width: `${healthPercent(entry.unitId)}%` }"
+        <div class="battle-screen__formation">
+          <div
+            v-for="(entry, index) in enemyRoster"
+            :key="entry.unitId"
+            :ref="(el) => setFighterRef(entry.unitId, el)"
+            class="battle-screen__formation-slot"
+            :class="formationSlotClass(index)"
+          >
+            <BattleFighterCard
+              :entry="entry"
+              side="enemy"
+              :toy-size="BATTLE_TOY_SIZE"
+              :health-percent="healthPercent(entry.unitId)"
+              :damages="damagesFor(entry.unitId)"
+              :fighter-class="fighterClass(entry.unitId, 'enemy')"
             />
-          </div>
-          <div class="battle-screen__sprite-wrap battle-screen__sprite-wrap--enemy">
-            <ToySprite
-              :definition-id="entry.definitionId"
-              :level="entry.level"
-              size="clamp(72px, 16vw, 108px)"
-            />
-            <span
-              v-for="dmg in damagesFor(entry.unitId)"
-              :key="dmg.id"
-              class="battle-screen__damage game-text-stroke"
-              :class="{ 'battle-screen__damage--crit': dmg.isCrit }"
-            >
-              -{{ formatNumber(dmg.amount) }}
-            </span>
           </div>
         </div>
       </section>
+
+      <div
+        v-if="flyingProjectile && projectilePoints"
+        :key="flyingProjectile.id"
+        class="battle-screen__projectile"
+        :class="{ 'battle-screen__projectile--crit': flyingProjectile.isCrit }"
+        :style="{
+          '--from-x': `${projectilePoints.from.x}px`,
+          '--from-y': `${projectilePoints.from.y}px`,
+          '--to-x': `${projectilePoints.to.x}px`,
+          '--to-y': `${projectilePoints.to.y}px`,
+          '--projectile-angle': `${projectilePoints.angle}deg`,
+          backgroundImage: `url('${battleSword}')`,
+        }"
+        aria-hidden="true"
+      />
     </div>
   </div>
 </template>
@@ -131,30 +195,36 @@ onMounted(() => {
 .battle-screen {
   position: fixed;
   inset: 0;
-  z-index: 240;
+  z-index: 500;
   overflow: hidden;
   font-weight: var(--game-font-weight);
+  background: #120c1c;
 }
 
 .battle-screen__bg {
   position: absolute;
   inset: 0;
-  background: url('/images/6bg.png') center center / cover no-repeat;
+  background-color: #120c1c;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .battle-screen__shade {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background:
-    radial-gradient(ellipse 90% 70% at 50% 50%, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.62) 100%),
-    linear-gradient(180deg, rgba(8, 12, 24, 0.45) 0%, rgba(8, 12, 24, 0.72) 100%);
+    radial-gradient(ellipse 90% 70% at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.35) 100%),
+    linear-gradient(180deg, rgba(8, 12, 24, 0.15) 0%, rgba(8, 12, 24, 0.45) 100%);
 }
 
 .battle-screen__arena {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   gap: clamp(8px, 2vw, 18px);
   height: 100%;
@@ -162,152 +232,122 @@ onMounted(() => {
     calc(12px + env(safe-area-inset-top, 0px))
     clamp(10px, 3vw, 24px)
     calc(16px + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
 }
 
 .battle-screen__team {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: clamp(10px, 2.4vw, 18px);
+  justify-content: flex-start;
+  align-items: center;
   min-height: 0;
 }
 
-.battle-screen__team--player {
-  align-items: flex-start;
-}
-
 .battle-screen__team--enemy {
-  align-items: flex-end;
+  justify-content: flex-end;
 }
 
-.battle-screen__center {
-  display: flex;
+.battle-screen__formation {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: repeat(6, auto);
+  column-gap: clamp(10px, 2.4vw, 18px);
   align-items: center;
-  justify-content: center;
-  padding: 0 4px;
+  justify-items: center;
 }
 
-.battle-screen__vs {
-  font-size: clamp(28px, 7vw, 42px);
-  color: #ffe566;
-  opacity: 0.9;
-}
-
-.battle-screen__fighter {
+.battle-screen__formation-slot {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  transition:
-    transform 0.2s ease,
-    opacity 0.25s ease,
-    filter 0.2s ease;
 }
 
-.battle-screen__fighter--player {
-  align-items: flex-start;
+.battle-screen__team--player .battle-screen__formation-slot--main-1 {
+  grid-column: 1;
+  grid-row: 1 / 3;
 }
 
-.battle-screen__fighter--enemy {
-  align-items: flex-end;
+.battle-screen__team--player .battle-screen__formation-slot--main-2 {
+  grid-column: 1;
+  grid-row: 3 / 5;
 }
 
-.battle-screen__fighter--attacking {
-  transform: scale(1.08) translateX(6px);
-  filter: drop-shadow(0 0 10px rgba(255, 229, 102, 0.55));
+.battle-screen__team--player .battle-screen__formation-slot--main-3 {
+  grid-column: 1;
+  grid-row: 5 / 7;
 }
 
-.battle-screen__fighter--enemy.battle-screen__fighter--attacking {
-  transform: scale(1.08) translateX(-6px);
+.battle-screen__team--player .battle-screen__formation-slot--between-1 {
+  grid-column: 2;
+  grid-row: 2 / 4;
 }
 
-.battle-screen__fighter--hit {
-  animation: battle-hit 0.34s ease;
+.battle-screen__team--player .battle-screen__formation-slot--between-2 {
+  grid-column: 2;
+  grid-row: 4 / 6;
 }
 
-.battle-screen__fighter--down {
-  opacity: 0.35;
-  filter: grayscale(0.85);
-  transform: scale(0.92);
+.battle-screen__team--enemy .battle-screen__formation-slot--main-1 {
+  grid-column: 2;
+  grid-row: 1 / 3;
 }
 
-.battle-screen__hp {
-  width: clamp(88px, 20vw, 128px);
-  height: 12px;
-  border: 2px solid var(--game-ink);
-  background: rgba(20, 10, 10, 0.85);
-  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
-  overflow: hidden;
+.battle-screen__team--enemy .battle-screen__formation-slot--main-2 {
+  grid-column: 2;
+  grid-row: 3 / 5;
 }
 
-.battle-screen__hp-fill {
-  height: 100%;
-  transition: width 0.28s ease-out;
+.battle-screen__team--enemy .battle-screen__formation-slot--main-3 {
+  grid-column: 2;
+  grid-row: 5 / 7;
 }
 
-.battle-screen__hp-fill--ally {
-  background: linear-gradient(180deg, #7ee06a 0%, #2e7d32 100%);
+.battle-screen__team--enemy .battle-screen__formation-slot--between-1 {
+  grid-column: 1;
+  grid-row: 2 / 4;
 }
 
-.battle-screen__hp-fill--enemy {
-  background: linear-gradient(180deg, #ff6b5b 0%, #c62828 100%);
+.battle-screen__team--enemy .battle-screen__formation-slot--between-2 {
+  grid-column: 1;
+  grid-row: 4 / 6;
 }
 
-.battle-screen__sprite-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  filter:
-    drop-shadow(0 0 2px #fff)
-    drop-shadow(0 0 5px rgba(255, 255, 255, 0.45));
-}
-
-.battle-screen__sprite-wrap--enemy {
-  transform: scaleX(-1);
-}
-
-.battle-screen__damage {
+.battle-screen__projectile {
   position: absolute;
-  top: 8%;
-  left: 50%;
-  z-index: 2;
-  font-size: clamp(18px, 4.6vw, 30px);
-  color: #ff5252;
-  white-space: nowrap;
+  left: var(--from-x);
+  top: var(--from-y);
+  z-index: 20;
+  width: clamp(64px, 16vmin, 96px);
+  height: clamp(64px, 16vmin, 96px);
+  transform: translate(-50%, -50%) rotate(var(--projectile-angle));
   pointer-events: none;
-  animation: battle-damage-float 0.78s ease-out forwards;
+  animation: battle-projectile-fly 0.56s linear forwards;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
 }
 
-.battle-screen__damage--crit {
-  color: #ff9100;
-  font-size: clamp(22px, 5.4vw, 36px);
+.battle-screen__projectile--crit {
+  filter:
+    drop-shadow(0 0 10px rgba(255, 145, 0, 0.85))
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+  animation-duration: 0.46s;
 }
 
-@keyframes battle-hit {
-  0%,
-  100% {
-    transform: translateX(0);
+@keyframes battle-projectile-fly {
+  from {
+    left: var(--from-x);
+    top: var(--from-y);
+    opacity: 0.35;
+    transform: translate(-50%, -50%) rotate(var(--projectile-angle)) scale(0.75);
   }
-  25% {
-    transform: translateX(-5px);
-  }
-  75% {
-    transform: translateX(5px);
-  }
-}
-
-@keyframes battle-damage-float {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 8px) scale(0.7);
-  }
-  18% {
+  12% {
     opacity: 1;
-    transform: translate(-50%, -8px) scale(1.08);
+    transform: translate(-50%, -50%) rotate(var(--projectile-angle)) scale(1);
   }
   100% {
-    opacity: 0;
-    transform: translate(-50%, -42px) scale(1);
+    left: var(--to-x);
+    top: var(--to-y);
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--projectile-angle)) scale(1.05);
   }
 }
 </style>

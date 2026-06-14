@@ -3,12 +3,14 @@ import { getSdkPlayer } from '@/yandex/player'
 import type { YsdkLeaderboardEntry } from '@/yandex/types'
 
 /** Техническое имя таблицы в консоли — замените на своё. */
-export const LEADERBOARD_NAME = 'leaderboard'
+export const LEADERBOARD_NAME = 'attackliderboard'
 
 export interface LeaderEntry {
   rank: number
   name: string
   score: number
+  uniqueId: string
+  extraData?: string
   isCurrentPlayer: boolean
 }
 
@@ -20,15 +22,51 @@ function mapEntry(
     rank: entry.rank,
     name: entry.player?.publicName?.trim() || 'Игрок',
     score: entry.score,
+    uniqueId: entry.player?.uniqueID ?? `rank-${entry.rank}`,
+    extraData: entry.extraData,
     isCurrentPlayer: userRank != null && entry.rank === userRank,
   }
 }
 
 function getDevMockEntries(localBest = 0): LeaderEntry[] {
   const rows: Omit<LeaderEntry, 'rank'>[] = [
-    { name: 'Игрок 1', score: 1000, isCurrentPlayer: false },
-    { name: 'Вы', score: localBest, isCurrentPlayer: true },
-    { name: 'Игрок 2', score: 500, isCurrentPlayer: false },
+    {
+      name: 'NoobMaster69',
+      score: 1200,
+      uniqueId: 'dev-opponent-1',
+      extraData: JSON.stringify({
+        v: 1,
+        team: [
+          { definitionId: 'huggy', level: 5 },
+          { definitionId: 'catnap', level: 4 },
+          { definitionId: 'boxy', level: 3 },
+        ],
+        power: 1400,
+        updatedAt: Date.now(),
+      }),
+      isCurrentPlayer: false,
+    },
+    {
+      name: 'Вы',
+      score: localBest,
+      uniqueId: 'dev-self',
+      isCurrentPlayer: true,
+    },
+    {
+      name: 'ToyHunter',
+      score: 800,
+      uniqueId: 'dev-opponent-2',
+      extraData: JSON.stringify({
+        v: 1,
+        team: [
+          { definitionId: 'dogday', level: 3 },
+          { definitionId: 'bunzo', level: 4 },
+        ],
+        power: 900,
+        updatedAt: Date.now(),
+      }),
+      isCurrentPlayer: false,
+    },
   ]
 
   return rows

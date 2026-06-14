@@ -89,6 +89,11 @@ export function getPurchaseCostByLevel(
     levelFactor *
     purchaseCountMultiplier(totalPurchases)
 
+  // Первая покупка на пустом поле — доступна сразу после старта.
+  if (totalPurchases === 0 && purchase <= 1 && incomeReferenceLevel <= 1) {
+    return earlyPurchaseFloor(purchase)
+  }
+
   return Math.max(earlyPurchaseFloor(purchase), Math.round(cost))
 }
 

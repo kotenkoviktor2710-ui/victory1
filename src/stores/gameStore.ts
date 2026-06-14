@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 
 import { DAILY_QUEST_TARGETS, QUEST_REWARDS, type ChestType } from '@/domain/constants'
 import { TOY_BY_ID, TOY_CATALOG, STARTER_TOY_ID } from '@/domain/data/toys'
+import type { PvpTeamSlot } from '@/domain/pvp/types'
+import { publishPvpDefense } from '@/yandex/pvpSync'
 import { MAX_FIELD_TOYS, clampFieldPosition, normalizeBoard, randomFieldPosition } from '@/domain/field'
 import { getRemovableToyIds } from '@/domain/fieldCleanup'
 import {
@@ -10,6 +12,7 @@ import {
   getClickRewardByLevel,
   getPurchaseCostByLevel,
   getShopPurchaseLevel,
+  getToyStats,
 } from '@/domain/formulas/economy'
 import type { FloatingIncome, GameSave, PvpRank, QuestId } from '@/domain/types/game'
 import { COMBO_MULTIPLIERS, COMBO_THRESHOLDS, COMBO_CLICK_GAIN, COMBO_DECAY_PER_TICK } from '@/domain/types/game'
@@ -39,7 +42,7 @@ function todayKey(): string {
 
 function defaultSave(): GameSave {
   return {
-    coins: 75,
+    coins: 100,
     gems: 5,
     board: [],
     purchaseCounts: {},
@@ -60,11 +63,13 @@ function defaultSave(): GameSave {
     },
     chestsOpened: 0,
     unlockedLevels: [],
+    unlockedDefinitionIds: [STARTER_TOY_ID],
+    seenPvpSessionIds: [],
   }
 }
 
 export const useGameStore = defineStore('game', () => {
-  const coins = ref(75)
+  const coins = ref(100)
   const gems = ref(5)
   const board = ref<PlacedToy[]>([])
   const pendingToys = ref<PlacedToy[]>([])
@@ -79,6 +84,10 @@ export const useGameStore = defineStore('game', () => {
   const questProgress = ref(defaultSave().questProgress)
   const chestsOpened = ref(0)
   const unlockedLevels = ref<number[]>([])
+  const unlockedDefinitionIds = ref<string[]>([STARTER_TOY_ID])
+  const seenPvpSessionIds = ref<string[]>([])
+
+  let pvpDefenseSyncTimer: ReturnType<typeof setTimeout> | null = null
 
   const comboProgress = ref(0)
   const comboLevel = ref(0)
@@ -104,6 +113,11 @@ export const useGameStore = defineStore('game', () => {
   /** Награда за рекламу в боковом магазине: на 1 уровень выше покупки. */
   const shopAdGrantLevel = computed(() =>
     Math.min(MAX_TOY_LEVEL, shopPurchaseLevel.value + 1),
+  )
+
+  /** Награда за оценку игры: персонаж на 1 уровень выше лучшего на поле. */
+  const freeCharacterGrantLevel = computed(() =>
+    Math.min(MAX_TOY_LEVEL, maxBoardLevel.value + 1),
   )
 
   const comboMultiplier = computed(() => COMBO_MULTIPLIERS[comboLevel.value] ?? 1)
@@ -219,6 +233,15 @@ export const useGameStore = defineStore('game', () => {
     return beginGrant(STARTER_TOY_ID, shopAdGrantLevel.value)
   }
 
+  function beginFreeCharacterGrant(): PendingPurchase | null {
+    if (!canGrantFreeCharacter()) return null
+    return beginGrant(STARTER_TOY_ID, freeCharacterGrantLevel.value)
+  }
+
+  function canGrantFreeCharacter(): boolean {
+    return canAddToy() && maxBoardLevel.value < MAX_TOY_LEVEL
+  }
+
   function trackPendingToy(toy: PlacedToy): void {
     pendingToys.value = [...pendingToys.value, toy]
   }
@@ -227,6 +250,16 @@ export const useGameStore = defineStore('game', () => {
     if (unlockedLevels.value.includes(level)) return false
     unlockedLevels.value = [...unlockedLevels.value, level]
     return true
+  }
+
+  function unlockDefinition(definitionId: string): void {
+    if (!TOY_BY_ID[definitionId]) return
+    if (unlockedDefinitionIds.value.includes(definitionId)) return
+    unlockedDefinitionIds.value = [...unlockedDefinitionIds.value, definitionId]
+  }
+
+  function isDefinitionUnlocked(definitionId: string): boolean {
+    return unlockedDefinitionIds.value.includes(definitionId)
   }
 
   function enqueueToyCelebration(toy: PlacedToy): void {
@@ -267,6 +300,7 @@ export const useGameStore = defineStore('game', () => {
   function finalizePurchase(toy: PlacedToy): void {
     if (!commitToyToBoard(toy)) return
 
+    unlockDefinition(toy.definitionId)
     enqueueToyCelebration(toy)
     removeUnusableToys([toy.instanceId])
   }
@@ -361,12 +395,64 @@ export const useGameStore = defineStore('game', () => {
     const pos = teamInstanceIds.value.indexOf(instanceId)
     if (pos >= 0) {
       teamInstanceIds.value.splice(pos, 1)
+      schedulePvpDefenseSync()
       return
     }
 
     if (teamInstanceIds.value.length >= 5) return
     if (!findToy(instanceId)) return
     teamInstanceIds.value.push(instanceId)
+    schedulePvpDefenseSync()
+  }
+
+  function getPvpTeamSlots(): PvpTeamSlot[] {
+    const selected = teamInstanceIds.value
+      .map((id) => board.value.find((toy) => toy.instanceId === id))
+      .filter((toy): toy is PlacedToy => Boolean(toy))
+      .map((toy) => ({ definitionId: toy.definitionId, level: toy.level }))
+
+    if (selected.length > 0) return selected.slice(0, 5)
+
+    return [...board.value]
+      .filter((toy) => Boolean(TOY_BY_ID[toy.definitionId]))
+      .sort((a, b) => {
+        const defA = TOY_BY_ID[a.definitionId]!
+        const defB = TOY_BY_ID[b.definitionId]!
+        const powerA = getToyStats(defA, a.level)
+        const powerB = getToyStats(defB, b.level)
+        return powerB.attack + powerB.health - (powerA.attack + powerA.health)
+      })
+      .slice(0, 5)
+      .map((toy) => ({ definitionId: toy.definitionId, level: toy.level }))
+  }
+
+  function calcPvpTeamPower(slots: PvpTeamSlot[]): number {
+    return slots.reduce((sum, slot) => {
+      const definition = TOY_BY_ID[slot.definitionId]
+      if (!definition) return sum
+      const stats = getToyStats(definition, slot.level)
+      return sum + stats.attack + stats.health
+    }, 0)
+  }
+
+  function markPvpSessionSeen(sessionId: string): void {
+    if (!sessionId || seenPvpSessionIds.value.includes(sessionId)) return
+    seenPvpSessionIds.value = [...seenPvpSessionIds.value, sessionId].slice(-80)
+  }
+
+  async function syncPvpDefense(): Promise<void> {
+    const team = getPvpTeamSlots()
+    if (team.length === 0) return
+    const rating = Math.max(1, pvpRating.value)
+    await publishPvpDefense(rating, team, calcPvpTeamPower(team))
+  }
+
+  function schedulePvpDefenseSync(): void {
+    if (pvpDefenseSyncTimer) clearTimeout(pvpDefenseSyncTimer)
+    pvpDefenseSyncTimer = setTimeout(() => {
+      pvpDefenseSyncTimer = null
+      void syncPvpDefense()
+    }, 1500)
   }
 
   function addCoins(amount: number): void {
@@ -491,6 +577,8 @@ export const useGameStore = defineStore('game', () => {
       questProgress: { ...questProgress.value },
       chestsOpened: chestsOpened.value,
       unlockedLevels: [...unlockedLevels.value],
+      unlockedDefinitionIds: [...unlockedDefinitionIds.value],
+      seenPvpSessionIds: [...seenPvpSessionIds.value],
     }
   }
 
@@ -525,6 +613,13 @@ export const useGameStore = defineStore('game', () => {
     unlockedLevels.value = save.unlockedLevels?.length
       ? [...save.unlockedLevels]
       : [...new Set(board.value.map((toy) => toy.level))]
+    unlockedDefinitionIds.value = save.unlockedDefinitionIds?.length
+      ? [...save.unlockedDefinitionIds]
+      : [STARTER_TOY_ID]
+    for (const toy of board.value) {
+      unlockDefinition(toy.definitionId)
+    }
+    seenPvpSessionIds.value = save.seenPvpSessionIds?.length ? [...save.seenPvpSessionIds] : []
     removeUnusableToys()
     resetDailyQuestsIfNeeded()
     updatePvpRank()
@@ -548,6 +643,9 @@ export const useGameStore = defineStore('game', () => {
     teamInstanceIds,
     questProgress,
     chestsOpened,
+    unlockedLevels,
+    unlockedDefinitionIds,
+    seenPvpSessionIds,
     comboProgress,
     comboLevel,
     floatingCoins,
@@ -556,16 +654,20 @@ export const useGameStore = defineStore('game', () => {
     maxBoardLevel,
     shopPurchaseLevel,
     shopAdGrantLevel,
+    freeCharacterGrantLevel,
     comboMultiplier,
     dismissToyCelebration,
+    isDefinitionUnlocked,
     registerToyClick,
     getToyClickReward,
     decayCombo,
     getPurchaseCost,
     canAddToy,
+    canGrantFreeCharacter,
     beginPurchase,
     beginShopPurchase,
     beginShopAdGrant,
+    beginFreeCharacterGrant,
     commitToyToBoard,
     finalizePurchase,
     buyToy,
@@ -576,6 +678,10 @@ export const useGameStore = defineStore('game', () => {
     mergeToys,
     moveToy,
     toggleTeamToy,
+    getPvpTeamSlots,
+    calcPvpTeamPower,
+    markPvpSessionSeen,
+    syncPvpDefense,
     addCoins,
     addGems,
     spendGems,

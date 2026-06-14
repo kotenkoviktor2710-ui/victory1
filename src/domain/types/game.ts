@@ -16,6 +16,10 @@ export interface GameSave {
   chestsOpened: number
   /** Уровни персонажей, для которых уже показывали модалку получения. */
   unlockedLevels: number[]
+  /** Персонажи, которых игрок уже получал хотя бы раз. */
+  unlockedDefinitionIds: string[]
+  /** ID сессий входящих атак, которые игрок уже видел. */
+  seenPvpSessionIds: string[]
 }
 
 export type PvpRank =

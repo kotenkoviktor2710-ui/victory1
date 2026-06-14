@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import GameModal from '@/components/game/GameModal.vue'
 import ToySprite from '@/components/game/ToySprite.vue'
-import { formatNumber } from '@/domain/formulas/economy'
+import { getToyPreviewLevel } from '@/domain/data/toys'
 import { useGameStore } from '@/stores/gameStore'
 
 defineProps<{
@@ -28,12 +28,6 @@ function buy(definitionId: string, event: MouseEvent): void {
 
 <template>
   <GameModal v-if="open" picker title="Коллекция" @close="emit('close')">
-    <template #subtitle>
-      <p class="game-modal__subtitle game-text-stroke">
-        Слияний: {{ game.totalMerges }}
-      </p>
-    </template>
-
     <div class="game-modal-picker__scroll">
       <div class="game-modal-picker__grid">
         <button
@@ -46,14 +40,17 @@ function buy(definitionId: string, event: MouseEvent): void {
         >
           <div class="game-modal-picker__hero">
             <ToySprite
+              v-if="game.isDefinitionUnlocked(toy.id)"
               :definition-id="toy.id"
-              :level="1"
-              size="clamp(64px, 12vw, 96px)"
+              :level="getToyPreviewLevel(toy.id)"
+              size="min(118px, 22vw)"
             />
+            <span
+              v-else
+              class="game-modal-picker__locked game-text-stroke"
+              aria-hidden="true"
+            >?</span>
           </div>
-          <span class="game-modal-picker__value game-text-stroke">
-            {{ formatNumber(game.getPurchaseCost(toy.id)) }}
-          </span>
         </button>
       </div>
     </div>

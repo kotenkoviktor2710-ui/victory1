@@ -406,7 +406,7 @@
 
 .game-side-card__stage {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -439,6 +439,8 @@
 }
 
 .game-side-card__toy {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -489,13 +491,21 @@
 }
 
 .game-modal--picker {
-  width: min(92vw, 920px);
-  max-width: 920px;
+  width: min(100%, 600px);
+  max-width: 600px;
 }
 
 .game-modal--picker .game-modal__body {
   padding-left: 12px;
   padding-right: 10px;
+}
+
+.game-modal--picker .game-modal__title {
+  font-size: clamp(16px, 4.2vw, 22px);
+}
+
+.game-modal--picker .game-modal__subtitle {
+  font-size: clamp(14px, 3.6vw, 20px);
 }
 
 .game-modal__header {
@@ -685,8 +695,8 @@
 
 .game-modal-picker__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(12px, 2.4vw, 18px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
   padding: 4px 2px 6px;
 }
 
@@ -694,8 +704,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 4px;
+  gap: 6px;
+  padding: 2px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -722,6 +732,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.game-modal-picker__locked {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: min(118px, 22vw);
+  height: min(118px, 22vw);
+  font-size: clamp(52px, 14vw, 84px);
+  line-height: 1;
+  color: #fff;
 }
 
 .game-modal-picker__mark {

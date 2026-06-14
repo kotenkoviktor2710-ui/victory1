@@ -9,6 +9,19 @@ export interface BattleDamageFloat {
   isCrit: boolean
 }
 
+export interface BattleProjectile {
+  id: number
+  attackerId: string
+  targetId: string
+  isCrit: boolean
+}
+
+const WINDUP_MS = 420
+const FLIGHT_MS = 560
+const IMPACT_MS = 480
+const COOLDOWN_MS = 280
+const FINISH_PAUSE_MS = 900
+
 function cloneUnitHealth(units: CombatUnit[]): Record<string, { health: number; maxHealth: number }> {
   const map: Record<string, { health: number; maxHealth: number }> = {}
   for (const unit of units) {
@@ -23,6 +36,12 @@ function delay(ms: number): Promise<void> {
   })
 }
 
+function getActionCooldown(actionCount: number): number {
+  if (actionCount > 60) return Math.round(COOLDOWN_MS * 0.55)
+  if (actionCount > 35) return Math.round(COOLDOWN_MS * 0.75)
+  return COOLDOWN_MS
+}
+
 export function useBattlePlayback(snapshot: BattleSnapshot) {
   const unitHealth = ref(
     cloneUnitHealth([...snapshot.playerUnits, ...snapshot.enemyUnits]),
@@ -30,19 +49,16 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
   const activeAttackerId = ref<string | null>(null)
   const activeTargetId = ref<string | null>(null)
   const hitTargetId = ref<string | null>(null)
+  const flyingProjectile = ref<BattleProjectile | null>(null)
   const damageFloats = ref<BattleDamageFloat[]>([])
   const phase = ref<'playing' | 'done'>('playing')
 
   let floatId = 0
+  let projectileId = 0
   let cancelled = false
   let playbackPromise: Promise<void> | null = null
 
-  const actionDelay = computed(() => {
-    const count = snapshot.actions.length
-    if (count > 80) return 180
-    if (count > 40) return 320
-    return 520
-  })
+  const playbackActions = computed(() => snapshot.actions)
 
   function applyAction(action: BattleAction): void {
     const target = unitHealth.value[action.targetId]
@@ -61,30 +77,52 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
     })
     window.setTimeout(() => {
       damageFloats.value = damageFloats.value.filter((entry) => entry.id !== id)
-    }, 780)
+    }, 900)
+  }
+
+  async function playAction(action: BattleAction, cooldownMs: number): Promise<void> {
+    if (cancelled) return
+    if (!isAlive(action.attackerId) || !isAlive(action.targetId)) return
+
+    activeAttackerId.value = action.attackerId
+    activeTargetId.value = action.targetId
+    await delay(WINDUP_MS)
+    if (cancelled) return
+
+    projectileId += 1
+    flyingProjectile.value = {
+      id: projectileId,
+      attackerId: action.attackerId,
+      targetId: action.targetId,
+      isCrit: action.isCrit,
+    }
+    await delay(FLIGHT_MS)
+    if (cancelled) return
+
+    flyingProjectile.value = null
+    applyAction(action)
+    hitTargetId.value = action.targetId
+    spawnDamageFloat(action)
+    await delay(IMPACT_MS)
+
+    activeAttackerId.value = null
+    activeTargetId.value = null
+    hitTargetId.value = null
+    await delay(cooldownMs)
   }
 
   async function playActions(): Promise<void> {
-    for (const action of snapshot.actions) {
-      if (cancelled) return
+    const actions = playbackActions.value
+    const cooldownMs = getActionCooldown(actions.length)
 
-      activeAttackerId.value = action.attackerId
-      activeTargetId.value = action.targetId
-      await delay(Math.round(actionDelay.value * 0.42))
-
-      if (cancelled) return
-
-      applyAction(action)
-      hitTargetId.value = action.targetId
-      spawnDamageFloat(action)
-      await delay(Math.round(actionDelay.value * 0.58))
-
-      activeAttackerId.value = null
-      activeTargetId.value = null
-      hitTargetId.value = null
+    for (const action of actions) {
+      await playAction(action, cooldownMs)
     }
 
-    if (!cancelled) phase.value = 'done'
+    if (!cancelled) {
+      await delay(FINISH_PAUSE_MS)
+      phase.value = 'done'
+    }
   }
 
   function start(): void {
@@ -95,6 +133,7 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
 
   function cancel(): void {
     cancelled = true
+    flyingProjectile.value = null
     phase.value = 'done'
   }
 
@@ -117,6 +156,7 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
     activeAttackerId,
     activeTargetId,
     hitTargetId,
+    flyingProjectile,
     damageFloats,
     phase,
     healthPercent,

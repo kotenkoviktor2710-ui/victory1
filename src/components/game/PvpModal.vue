@@ -11,6 +11,7 @@ import { useGameStore } from '@/stores/gameStore'
 
 const props = defineProps<{
   open: boolean
+  loading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -86,7 +87,7 @@ watch(
             <ToySprite
               :definition-id="toy.definitionId"
               :level="toy.level"
-              size="clamp(64px, 12vw, 96px)"
+              size="min(118px, 22vw)"
             />
           </div>
           <span class="game-modal-picker__value game-text-stroke">{{ formatNumber(toyPower(toy)) }}</span>
@@ -108,10 +109,10 @@ watch(
       <button
         type="button"
         class="game-sketch-btn game-sketch-btn--green game-modal-picker__action game-text-stroke"
-        :disabled="!canBattle"
+        :disabled="!canBattle || loading"
         @click="onBattle"
       >
-        Начать бой
+        {{ loading ? 'Поиск...' : 'Начать бой' }}
       </button>
       <button
         type="button"
