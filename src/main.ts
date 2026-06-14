@@ -1,6 +1,4 @@
 import './assets/main.css'
-import '@/game/styles/fonts.css'
-import '@/game/styles/styles.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

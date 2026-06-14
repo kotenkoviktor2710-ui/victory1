@@ -2,7 +2,7 @@ import { getSdkPlayer } from '@/yandex/player'
 import { getYsdk } from '@/yandex/sdk'
 
 /** Ключ сохранения в облаке игрока — замените на свой. */
-export const DEFAULT_SAVE_KEY = 'app_save'
+export const DEFAULT_SAVE_KEY = 'merge_playtime_save'
 
 const DEV_LS_PREFIX = 'yandex-template-save:'
 

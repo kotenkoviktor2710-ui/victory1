@@ -41,4 +41,4 @@ npm run build
 
 1. Замените `DEFAULT_SAVE_KEY` в `src/yandex/playerStorage.ts`.
 2. Замените `LEADERBOARD_NAME` в `src/yandex/leaderboard.ts`.
-3. Удалите демо-экран `src/views/HomeView.vue` и подключите свою игру.
+3. Замените демо-экран `src/views/HomeView.vue` на свою игру.

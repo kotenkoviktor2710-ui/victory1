@@ -1,13 +1,13 @@
 import { createRouter, createMemoryHistory } from 'vue-router'
-import NovelView from '../views/NovelView.vue'
+import GameView from '../views/GameView.vue'
 
 const router = createRouter({
   history: createMemoryHistory(),
   routes: [
     {
       path: '/',
-      name: 'novel',
-      component: NovelView,
+      name: 'game',
+      component: GameView,
     },
   ],
 })

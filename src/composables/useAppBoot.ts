@@ -1,8 +1,6 @@
 import { markAppReady } from '@/yandex/appReady'
 import { runYandexBootstrap } from '@/yandex/bootstrap'
 import { initYandex } from '@/yandex/sdk'
-import { prepareNovelBoot } from '@/game/startNovel'
-import { loadStory } from '@/game/story-loader.js'
 
 const MIN_BOOT_MS = 800
 
@@ -29,14 +27,6 @@ export async function runAppBoot(onProgress?: (value: number) => void): Promise<
   actualProgress = 0.15
   await initYandex()
   await runYandexBootstrap()
-  actualProgress = 0.35
-  publish()
-
-  await prepareNovelBoot()
-  actualProgress = 0.55
-  publish()
-
-  await loadStory()
   actualProgress = 0.85
   publish()
 
