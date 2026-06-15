@@ -27,7 +27,7 @@ const canBuyFeatured = computed(
 
 const canWatchAd = computed(() => game.canAddToy())
 
-const TOY_PREVIEW_SIZE = 'clamp(104px, 29vw, 136px)'
+const TOY_PREVIEW_SIZE = 'clamp(94px, 24vw, 180px)'
 
 function buyFeatured(): void {
   const rect = shopBtnRef.value?.getBoundingClientRect()
@@ -101,18 +101,5 @@ function onRewardedAd(): void {
   gap: 16px;
   padding: 8px 6px 8px 0;
   z-index: 10;
-}
-
-.game-side-card__toy :deep(.toy-sprite__img) {
-  filter:
-    drop-shadow(2px 0 0 #fff)
-    drop-shadow(-2px 0 0 #fff)
-    drop-shadow(0 2px 0 #fff)
-    drop-shadow(0 -2px 0 #fff)
-    drop-shadow(2px 2px 0 #fff)
-    drop-shadow(-2px -2px 0 #fff)
-    drop-shadow(2px -2px 0 #fff)
-    drop-shadow(-2px 2px 0 #fff)
-    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
 }
 </style>

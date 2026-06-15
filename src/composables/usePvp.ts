@@ -7,6 +7,8 @@ import type { InboundAttack, PvpOpponent } from '@/domain/pvp/types'
 import {
   calcTeamPower,
   generateEnemyTeam,
+  isOpponentTooWeak,
+  pickBotOpponentName,
   simulateBattle,
   simulateBattleDetailed,
   snapshotToBattleResult,
@@ -31,7 +33,7 @@ export function usePvp() {
   const game = useGameStore()
 
   function resolvePlayerCombatTeam() {
-    const slots = game.getPvpTeamSlots()
+    const slots = game.getSelectedPvpTeamSlots()
     return teamSlotsToCombatTeam(slots, TOY_BY_ID)
   }
 
@@ -39,7 +41,7 @@ export function usePvp() {
 
   const teamPower = computed(() => calcTeamPower(playerTeam.value))
 
-  const canBattle = computed(() => playerTeam.value.length > 0)
+  const canBattle = computed(() => game.teamInstanceIds.length > 0)
 
   async function pickOutboundOpponent(): Promise<PvpOpponent | null> {
     const entries = await fetchPvpLeaderboardOpponents(game.pvpRating)
@@ -58,23 +60,42 @@ export function usePvp() {
     return snapshot
   }
 
+  function buildBotOpponent(
+    enemy: ReturnType<typeof generateEnemyTeam>,
+  ): PvpOpponent {
+    const team = enemy.map((member) => ({
+      definitionId: member.definition.id,
+      level: member.level,
+    }))
+    return {
+      uniqueId: `bot-${Date.now()}`,
+      name: pickBotOpponentName(),
+      rating: Math.max(1, game.pvpRating + Math.floor(Math.random() * 80) - 40),
+      team,
+      power: calcTeamPower(enemy),
+    }
+  }
+
   async function prepareOutboundBattle(): Promise<BattleSnapshot | null> {
     if (!canBattle.value || isPreparingBattle.value) return null
 
     isPreparingBattle.value = true
     try {
       const opponent = await pickOutboundOpponent()
-      currentOpponent.value = opponent
 
       if (opponent) {
         const enemy = teamSlotsToCombatTeam(opponent.team, TOY_BY_ID)
-        if (enemy.length > 0) {
+        const enemyPower = calcTeamPower(enemy)
+        if (enemy.length > 0 && !isOpponentTooWeak(enemyPower, teamPower.value)) {
+          currentOpponent.value = opponent
           return buildSnapshot(enemy, 'outbound')
         }
       }
 
-      const fallbackEnemy = generateEnemyTeam(teamPower.value, game.catalog)
-      currentOpponent.value = null
+      const fallbackEnemy = generateEnemyTeam(teamPower.value, game.catalog, {
+        playerTeam: playerTeam.value,
+      })
+      currentOpponent.value = buildBotOpponent(fallbackEnemy)
       return buildSnapshot(fallbackEnemy, 'outbound')
     } finally {
       isPreparingBattle.value = false

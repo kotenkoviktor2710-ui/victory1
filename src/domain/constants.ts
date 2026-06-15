@@ -26,6 +26,15 @@ export const BOARD_SLOT_COUNTS: Record<4 | 5 | 6, number> = {
 
 export const MAX_TEAM_SIZE = 5
 
+/** Кулдаун исходящего PvP-нападения (мс). */
+export const PVP_ATTACK_COOLDOWN_MS = 2 * 60 * 1000
+
+/** Просмотров rewarded-рекламы до бонусной награды. */
+export const AD_MILESTONE_VIEWS = 10
+
+/** Персонажей за полный цикл просмотров. */
+export const AD_MILESTONE_REWARD_TOYS = 10
+
 export const PVP_RANK_THRESHOLDS = [
   { rank: 'bronze' as const, min: 0 },
   { rank: 'silver' as const, min: 500 },

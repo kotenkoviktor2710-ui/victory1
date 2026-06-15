@@ -1,5 +1,5 @@
 import { getToyImageByLevel } from '@/domain/data/toyImages'
-import type { ToyDefinition } from '../types/toy'
+import { MAX_TOY_LEVEL, MIN_TOY_LEVEL, type ToyDefinition } from '../types/toy'
 import { getToyStats } from './economy'
 
 export interface CombatUnit {
@@ -26,6 +26,8 @@ export interface BattleAction {
   targetId: string
   damage: number
   isCrit: boolean
+  waveIndex: number
+  side: 'player' | 'enemy'
 }
 
 export interface BattleRosterEntry {
@@ -116,42 +118,60 @@ export function simulateBattleDetailed(
 
   let round = 0
   const maxRounds = 200
+  let waveIndex = 0
 
   while (
     round < maxRounds &&
     playerUnits.some((u) => u.health > 0) &&
     enemyUnits.some((u) => u.health > 0)
   ) {
-    const living = [
-      ...playerUnits.filter((u) => u.health > 0).map((u) => ({ side: 'player' as const, unit: u })),
-      ...enemyUnits.filter((u) => u.health > 0).map((u) => ({ side: 'enemy' as const, unit: u })),
-    ].sort((a, b) => b.unit.speed - a.unit.speed)
+    const livingPlayers = playerUnits.filter((u) => u.health > 0)
 
-    for (const actor of living) {
-      if (actor.unit.health <= 0) continue
-
-      const targets =
-        actor.side === 'player'
-          ? enemyUnits.filter((u) => u.health > 0)
-          : playerUnits.filter((u) => u.health > 0)
-
+    for (let i = 0; i < livingPlayers.length; i += 1) {
+      const attacker = livingPlayers[i]!
+      const targets = enemyUnits.filter((u) => u.health > 0)
       if (targets.length === 0) break
 
-      const target = targets[0]!
-      const { damage, isCrit } = rollDamage(actor.unit)
+      const target = targets[i % targets.length]!
+      const { damage, isCrit } = rollDamage(attacker)
       target.health = Math.max(0, target.health - damage)
 
       actions.push({
-        attackerId: actor.unit.id,
+        attackerId: attacker.id,
         targetId: target.id,
         damage,
         isCrit,
+        waveIndex,
+        side: 'player',
       })
-
-      if (!playerUnits.some((u) => u.health > 0) || !enemyUnits.some((u) => u.health > 0)) break
     }
 
-    round++
+    waveIndex += 1
+    if (!enemyUnits.some((u) => u.health > 0)) break
+
+    const livingEnemies = enemyUnits.filter((u) => u.health > 0)
+
+    for (let i = 0; i < livingEnemies.length; i += 1) {
+      const attacker = livingEnemies[i]!
+      const targets = playerUnits.filter((u) => u.health > 0)
+      if (targets.length === 0) break
+
+      const target = targets[i % targets.length]!
+      const { damage, isCrit } = rollDamage(attacker)
+      target.health = Math.max(0, target.health - damage)
+
+      actions.push({
+        attackerId: attacker.id,
+        targetId: target.id,
+        damage,
+        isCrit,
+        waveIndex,
+        side: 'enemy',
+      })
+    }
+
+    waveIndex += 1
+    round += 1
   }
 
   const playerAlive = playerUnits.some((u) => u.health > 0)
@@ -195,22 +215,91 @@ export function simulateBattle(
   return snapshotToBattleResult(simulateBattleDetailed(playerTeam, enemyTeam))
 }
 
+export interface GenerateEnemyTeamOptions {
+  playerTeam?: { definition: ToyDefinition; level: number }[]
+  teamSize?: number
+}
+
+const BOT_OPPONENT_NAMES = ['Робот', 'Синтет', 'Имитатор', 'Двойник', 'Защитник'] as const
+
+function clampToyLevel(level: number): number {
+  return Math.max(MIN_TOY_LEVEL, Math.min(MAX_TOY_LEVEL, Math.round(level)))
+}
+
+function resolveReferenceLevel(playerTeam: { level: number }[]): number {
+  if (playerTeam.length === 0) return 10
+  const avg = playerTeam.reduce((sum, toy) => sum + toy.level, 0) / playerTeam.length
+  const peak = Math.max(...playerTeam.map((toy) => toy.level))
+  return Math.round(avg * 0.6 + peak * 0.4)
+}
+
+function pickStrongToyPool(catalog: ToyDefinition[]): ToyDefinition[] {
+  const sorted = [...catalog].sort(
+    (a, b) => b.baseAttack + b.baseHealth - (a.baseAttack + a.baseHealth),
+  )
+  const poolSize = Math.max(4, Math.ceil(sorted.length * 0.65))
+  return sorted.slice(0, poolSize)
+}
+
+function tuneTeamToTargetPower(
+  team: { definition: ToyDefinition; level: number }[],
+  targetPower: number,
+): void {
+  const minPower = targetPower * 0.92
+  const maxPower = targetPower * 1.08
+  let currentPower = calcTeamPower(team)
+
+  for (let attempt = 0; attempt < 48; attempt += 1) {
+    if (currentPower >= minPower && currentPower <= maxPower) return
+
+    const idx = Math.floor(Math.random() * team.length)
+    const member = team[idx]!
+    if (currentPower < minPower && member.level < MAX_TOY_LEVEL) {
+      member.level += 1
+    } else if (currentPower > maxPower && member.level > MIN_TOY_LEVEL) {
+      member.level -= 1
+    } else {
+      continue
+    }
+    currentPower = calcTeamPower(team)
+  }
+}
+
 export function generateEnemyTeam(
   playerPower: number,
   catalog: ToyDefinition[],
+  options: GenerateEnemyTeamOptions = {},
 ): { definition: ToyDefinition; level: number }[] {
-  const targetPower = playerPower * (0.85 + Math.random() * 0.3)
-  const teamSize = 3 + Math.floor(Math.random() * 3)
-  const team: { definition: ToyDefinition; level: number }[] = []
-  let currentPower = 0
+  if (catalog.length === 0) return []
 
-  while (team.length < teamSize && currentPower < targetPower) {
-    const def = catalog[Math.floor(Math.random() * catalog.length)]!
-    const level = 1 + Math.floor(Math.random() * 5)
-    team.push({ definition: def, level })
-    const stats = getToyStats(def, level)
-    currentPower += stats.attack + stats.health
+  const playerTeam = options.playerTeam ?? []
+  const teamSize = options.teamSize ?? 5
+  const referenceLevel = resolveReferenceLevel(playerTeam)
+  const levelSpread = Math.max(2, Math.round(referenceLevel * 0.12))
+  const targetPower = Math.max(1, playerPower * (0.9 + Math.random() * 0.2))
+  const toyPool = pickStrongToyPool(catalog)
+
+  const team: { definition: ToyDefinition; level: number }[] = []
+  for (let slot = 0; slot < teamSize; slot += 1) {
+    const levelOffset = Math.floor(Math.random() * (levelSpread * 2 + 1)) - levelSpread
+    const definition = toyPool[Math.floor(Math.random() * toyPool.length)]!
+    team.push({
+      definition,
+      level: clampToyLevel(referenceLevel + levelOffset),
+    })
   }
 
-  return team.length > 0 ? team : [{ definition: catalog[0]!, level: 1 }]
+  tuneTeamToTargetPower(team, targetPower)
+
+  return team.length > 0 ? team : [{ definition: catalog[0]!, level: clampToyLevel(referenceLevel) }]
+}
+
+export function pickBotOpponentName(): string {
+  return BOT_OPPONENT_NAMES[Math.floor(Math.random() * BOT_OPPONENT_NAMES.length)]!
+}
+
+/** Соперник из лидерборда слишком слабый — лучше сгенерировать бота. */
+export function isOpponentTooWeak(opponentPower: number, playerPower: number): boolean {
+  if (playerPower <= 0) return false
+  return opponentPower < playerPower * 0.65
 }

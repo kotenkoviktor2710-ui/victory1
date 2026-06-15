@@ -136,6 +136,7 @@ export function useMergeDrag(options: {
     didDrag = true
     ghost.value = { x: event.clientX, y: event.clientY, image: ghostImage, level: ghostLevel }
     dragOverId.value = idAt(event.clientX, event.clientY, dragFromId.value ?? undefined)
+    options.onMove?.(dragFromId.value, event.clientX, event.clientY)
   }
 
   function onPointerUp(event: PointerEvent): boolean {

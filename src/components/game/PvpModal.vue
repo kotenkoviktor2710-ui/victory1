@@ -38,6 +38,7 @@ function onTeamToy(instanceId: string): void {
 }
 
 function onBattle(): void {
+  if (!canBattle.value || props.loading) return
   emit('start-battle')
 }
 

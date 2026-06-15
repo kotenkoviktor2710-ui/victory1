@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, type ComponentPublicInstance } from 'vue'
+import { onUnmounted, ref, type ComponentPublicInstance } from 'vue'
 
 import { clientToFieldPercent } from '@/domain/field'
 import type { PlacedToy } from '@/domain/types/toy'
@@ -42,21 +42,16 @@ let mergeBurstId = 0
 
 const fieldRef = ref<HTMLElement | null>(null)
 
-const LANDING_MS = 520
-const landingToyIds = ref<Record<string, true>>({})
-const landingTimers = new Map<string, number>()
 const tapReactingIds = ref<Record<string, true>>({})
 const tapReactTimers = new Map<string, number>()
 
 const { flights, launch } = usePurchaseFlight((toy) => {
-  markToyLanding(toy.instanceId)
   game.finalizePurchase(toy)
 })
 
 const {
   dragFromId,
   isDragging,
-  ghost,
   lastMergedId,
   setToyRef,
   onPointerDown,
@@ -85,18 +80,8 @@ const {
   },
 })
 
-const flightHiddenIds = computed(() => {
-  const ids = new Set<string>()
-  for (const active of flights.value) ids.add(active.toy.instanceId)
-  return ids
-})
-
 function isToyDragging(instanceId: string): boolean {
   return dragFromId.value === instanceId && isDragging.value
-}
-
-function isToyHidden(instanceId: string): boolean {
-  return flightHiddenIds.value.has(instanceId)
 }
 
 const FIELD_TOY_SIZE = 'clamp(140px, 36vw, 220px)'
@@ -109,30 +94,8 @@ function wobbleDelay(instanceId: string): number {
   return (hash / 100) * 2.4
 }
 
-function isToyLanding(instanceId: string): boolean {
-  return landingToyIds.value[instanceId] === true
-}
-
-function markToyLanding(instanceId: string): void {
-  const prev = landingTimers.get(instanceId)
-  if (prev != null) window.clearTimeout(prev)
-
-  landingToyIds.value = { ...landingToyIds.value, [instanceId]: true }
-  const timer = window.setTimeout(() => {
-    landingTimers.delete(instanceId)
-    const next = { ...landingToyIds.value }
-    delete next[instanceId]
-    landingToyIds.value = next
-  }, LANDING_MS)
-  landingTimers.set(instanceId, timer)
-}
-
 function isToyIdle(instanceId: string): boolean {
-  return (
-    !flightHiddenIds.value.has(instanceId) &&
-    !isToyLanding(instanceId) &&
-    lastMergedId.value !== instanceId
-  )
+  return lastMergedId.value !== instanceId
 }
 
 function launchToy(toy: PlacedToy, fromRect: DOMRect, fieldRect: DOMRect): void {
@@ -266,6 +229,20 @@ function grantFreeCharacterWithFlight(fromRect: DOMRect): boolean {
   return true
 }
 
+function grantAdMilestoneToysWithFlight(fromRect: DOMRect, maxCount = 10): number {
+  const fieldRect = fieldRef.value?.getBoundingClientRect()
+  if (!fieldRect) return 0
+
+  const toys = game.beginAdMilestoneGrants(maxCount)
+  toys.forEach((toy, index) => {
+    window.setTimeout(() => {
+      launchToy(toy, fromRect, fieldRect)
+    }, index * 140)
+  })
+
+  return toys.length
+}
+
 function grantRandomToyWithFlight(fromRect: DOMRect): boolean {
   const pending = game.grantRandomCommonToy()
   const fieldRect = fieldRef.value?.getBoundingClientRect()
@@ -275,8 +252,6 @@ function grantRandomToyWithFlight(fromRect: DOMRect): boolean {
 }
 
 onUnmounted(() => {
-  for (const timer of landingTimers.values()) window.clearTimeout(timer)
-  landingTimers.clear()
   for (const timer of tapReactTimers.values()) window.clearTimeout(timer)
   tapReactTimers.clear()
 })
@@ -288,6 +263,7 @@ defineExpose({
   grantRandomToyWithFlight,
   grantShopAdToyWithFlight,
   grantFreeCharacterWithFlight,
+  grantAdMilestoneToysWithFlight,
 })
 </script>
 
@@ -308,10 +284,8 @@ defineExpose({
         type="button"
         class="floor-arena__toy"
         :class="{
-          'floor-arena__toy--hidden': isToyHidden(toy.instanceId),
           'floor-arena__toy--dragging': isToyDragging(toy.instanceId),
           'floor-arena__toy--idle': isToyIdle(toy.instanceId),
-          'floor-arena__toy--landing': isToyLanding(toy.instanceId),
           'floor-arena__toy--tap': isToyTapReacting(toy.instanceId),
           'floor-arena__toy--merged': lastMergedId === toy.instanceId,
         }"
@@ -338,19 +312,11 @@ defineExpose({
         transform: `translate(-50%, -50%) scale(${active.scale})`,
       }"
     >
-      <ToySprite :level="active.toy.level" :size="FIELD_TOY_SIZE" />
-    </div>
-
-    <div
-      v-if="ghost && isDragging"
-      class="floor-arena__ghost"
-      :style="{
-        left: `${ghost.x}px`,
-        top: `${ghost.y}px`,
-        transform: `translate(-50%, -50%)`,
-      }"
-    >
-      <ToySprite :level="ghost.level" :size="FIELD_TOY_SIZE" />
+      <ToySprite
+        :definition-id="active.toy.definitionId"
+        :level="active.toy.level"
+        :size="FIELD_TOY_SIZE"
+      />
     </div>
 
     <div class="floor-arena__merge-bursts">
@@ -422,29 +388,10 @@ defineExpose({
   touch-action: none;
 }
 
-.floor-arena__toy--hidden {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .floor-arena__toy--dragging {
-  opacity: 0.34;
-  pointer-events: none;
-  transition: opacity 0.16s ease;
-}
-
-.floor-arena__toy--dragging :deep(.toy-sprite__img) {
-  filter: grayscale(0.12);
-}
-
-.floor-arena__toy--landing {
-  pointer-events: none;
-}
-
-.floor-arena__toy--landing :deep(.toy-sprite__img) {
-  animation: none;
-  transform: rotate(0deg) translateY(0);
+  z-index: 3;
+  cursor: grabbing;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.22));
 }
 
 .floor-arena__toy--idle :deep(.toy-sprite__img) {
@@ -468,17 +415,10 @@ defineExpose({
   transform-origin: center center;
 }
 
-.floor-arena__flight,
-.floor-arena__ghost {
+.floor-arena__flight {
   position: fixed;
   z-index: 120;
   pointer-events: none;
-}
-
-.floor-arena__ghost {
-  opacity: 0.78;
-  transition: opacity 0.16s ease;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.22));
 }
 
 .floor-arena__merge-bursts {

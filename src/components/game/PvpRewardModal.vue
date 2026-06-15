@@ -48,16 +48,12 @@ function onSkip(): void {
         {{ won ? 'Победа' : 'Поражение' }}
       </h2>
 
-      <div v-if="won" class="pvp-reward__stars" aria-hidden="true">
-        <span v-for="i in 3" :key="i" class="pvp-reward__star">★</span>
-      </div>
-
       <p class="pvp-reward__hint">
         Увеличить награду за просмотр рекламы?
       </p>
 
       <div class="pvp-reward__slider-wrap">
-        <span class="pvp-reward__live-mult game-text-stroke">x{{ multiplier }}</span>
+        <span class="pvp-reward__live-mult game-text-stroke">{{ multiplier }}</span>
 
         <div class="pvp-reward__slider">
           <div class="pvp-reward__marks" aria-hidden="true">
@@ -151,21 +147,6 @@ function onSkip(): void {
   color: #fff;
 }
 
-.pvp-reward__stars {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.pvp-reward__star {
-  font-size: clamp(34px, 9vw, 48px);
-  line-height: 1;
-  color: #ffe566;
-  text-shadow:
-    0 0 10px rgba(255, 229, 102, 0.65),
-    2px 2px 0 var(--game-ink);
-}
-
 .pvp-reward__hint {
   margin: 18px 0 16px;
   font-size: clamp(14px, 3.6vw, 17px);
@@ -177,7 +158,7 @@ function onSkip(): void {
 .pvp-reward__slider-wrap {
   position: relative;
   width: 100%;
-  padding-top: 40px;
+  padding-top: 48px;
   margin-bottom: 22px;
 }
 
@@ -193,8 +174,8 @@ function onSkip(): void {
 
 .pvp-reward__slider {
   position: relative;
-  height: 44px;
-  padding-top: 22px;
+  height: 52px;
+  padding-top: 30px;
 }
 
 .pvp-reward__marks {
@@ -211,7 +192,7 @@ function onSkip(): void {
 .pvp-reward__mark {
   flex: 1;
   text-align: center;
-  font-size: 11px;
+  font-size: clamp(18px, 4.8vw, 26px);
   font-weight: var(--game-font-weight);
   color: rgba(255, 255, 255, 0.82);
   white-space: nowrap;
@@ -219,14 +200,14 @@ function onSkip(): void {
 
 .pvp-reward__mark--peak {
   color: #ffe566;
-  font-size: 12px;
+  font-size: clamp(20px, 5.2vw, 28px);
 }
 
 .pvp-reward__slider-track {
   position: absolute;
   left: 0;
   right: 0;
-  top: 22px;
+  top: 30px;
   height: 16px;
   border: 3px solid var(--game-ink);
   border-radius: 999px;
@@ -236,7 +217,7 @@ function onSkip(): void {
 
 .pvp-reward__thumb {
   position: absolute;
-  top: calc(22px + 8px);
+  top: calc(30px + 8px);
   z-index: 2;
   width: 28px;
   height: 28px;

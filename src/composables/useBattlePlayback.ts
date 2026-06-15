@@ -1,11 +1,19 @@
 import { computed, onUnmounted, ref } from 'vue'
 
+import { pickBattleHitWord } from '@/domain/battleFx'
 import type { BattleAction, BattleSnapshot, CombatUnit } from '@/domain/formulas/combat'
 
 export interface BattleDamageFloat {
   id: number
   unitId: string
   amount: number
+  isCrit: boolean
+}
+
+export interface BattleHitWord {
+  id: number
+  unitId: string
+  word: string
   isCrit: boolean
 }
 
@@ -16,10 +24,11 @@ export interface BattleProjectile {
   isCrit: boolean
 }
 
-const WINDUP_MS = 420
+const WINDUP_MS = 360
 const FLIGHT_MS = 560
-const IMPACT_MS = 480
-const COOLDOWN_MS = 280
+const IMPACT_MS = 420
+const TEAM_MEMBER_GAP_MS = 140
+const WAVE_COOLDOWN_MS = 320
 const FINISH_PAUSE_MS = 900
 
 function cloneUnitHealth(units: CombatUnit[]): Record<string, { health: number; maxHealth: number }> {
@@ -36,29 +45,46 @@ function delay(ms: number): Promise<void> {
   })
 }
 
-function getActionCooldown(actionCount: number): number {
-  if (actionCount > 60) return Math.round(COOLDOWN_MS * 0.55)
-  if (actionCount > 35) return Math.round(COOLDOWN_MS * 0.75)
-  return COOLDOWN_MS
+function groupActionsByWave(actions: BattleAction[]): BattleAction[][] {
+  const waves: BattleAction[][] = []
+
+  for (const action of actions) {
+    const lastWave = waves[waves.length - 1]
+    if (!lastWave || lastWave[0]?.waveIndex !== action.waveIndex) {
+      waves.push([action])
+      continue
+    }
+    lastWave.push(action)
+  }
+
+  return waves
+}
+
+function getWaveCooldown(waveCount: number): number {
+  if (waveCount > 30) return Math.round(WAVE_COOLDOWN_MS * 0.55)
+  if (waveCount > 18) return Math.round(WAVE_COOLDOWN_MS * 0.75)
+  return WAVE_COOLDOWN_MS
 }
 
 export function useBattlePlayback(snapshot: BattleSnapshot) {
   const unitHealth = ref(
     cloneUnitHealth([...snapshot.playerUnits, ...snapshot.enemyUnits]),
   )
-  const activeAttackerId = ref<string | null>(null)
-  const activeTargetId = ref<string | null>(null)
-  const hitTargetId = ref<string | null>(null)
-  const flyingProjectile = ref<BattleProjectile | null>(null)
+  const activeAttackerIds = ref<string[]>([])
+  const activeTargetIds = ref<string[]>([])
+  const hitTargetIds = ref<string[]>([])
+  const flyingProjectiles = ref<BattleProjectile[]>([])
   const damageFloats = ref<BattleDamageFloat[]>([])
+  const hitWords = ref<BattleHitWord[]>([])
   const phase = ref<'playing' | 'done'>('playing')
 
   let floatId = 0
+  let hitWordId = 0
   let projectileId = 0
   let cancelled = false
   let playbackPromise: Promise<void> | null = null
 
-  const playbackActions = computed(() => snapshot.actions)
+  const playbackWaves = computed(() => groupActionsByWave(snapshot.actions))
 
   function applyAction(action: BattleAction): void {
     const target = unitHealth.value[action.targetId]
@@ -80,43 +106,76 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
     }, 900)
   }
 
-  async function playAction(action: BattleAction, cooldownMs: number): Promise<void> {
+  function spawnHitWord(action: BattleAction): void {
+    hitWordId += 1
+    const id = hitWordId
+    hitWords.value.push({
+      id,
+      unitId: action.targetId,
+      word: pickBattleHitWord(),
+      isCrit: action.isCrit,
+    })
+    window.setTimeout(() => {
+      hitWords.value = hitWords.value.filter((entry) => entry.id !== id)
+    }, 900)
+  }
+
+  async function playSingleAction(action: BattleAction): Promise<void> {
     if (cancelled) return
     if (!isAlive(action.attackerId) || !isAlive(action.targetId)) return
 
-    activeAttackerId.value = action.attackerId
-    activeTargetId.value = action.targetId
+    activeAttackerIds.value = [action.attackerId]
+    activeTargetIds.value = [action.targetId]
     await delay(WINDUP_MS)
     if (cancelled) return
 
     projectileId += 1
-    flyingProjectile.value = {
+    flyingProjectiles.value = [{
       id: projectileId,
       attackerId: action.attackerId,
       targetId: action.targetId,
       isCrit: action.isCrit,
-    }
+    }]
     await delay(FLIGHT_MS)
     if (cancelled) return
 
-    flyingProjectile.value = null
+    flyingProjectiles.value = []
     applyAction(action)
-    hitTargetId.value = action.targetId
     spawnDamageFloat(action)
+    spawnHitWord(action)
+    hitTargetIds.value = [action.targetId]
     await delay(IMPACT_MS)
 
-    activeAttackerId.value = null
-    activeTargetId.value = null
-    hitTargetId.value = null
+    activeAttackerIds.value = []
+    activeTargetIds.value = []
+    hitTargetIds.value = []
+  }
+
+  async function playWave(actions: BattleAction[], cooldownMs: number): Promise<void> {
+    if (cancelled) return
+
+    const valid = actions.filter(
+      (action) => isAlive(action.attackerId) && isAlive(action.targetId),
+    )
+    if (valid.length === 0) return
+
+    for (let index = 0; index < valid.length; index += 1) {
+      await playSingleAction(valid[index]!)
+      if (cancelled) return
+      if (index < valid.length - 1) {
+        await delay(TEAM_MEMBER_GAP_MS)
+      }
+    }
+
     await delay(cooldownMs)
   }
 
   async function playActions(): Promise<void> {
-    const actions = playbackActions.value
-    const cooldownMs = getActionCooldown(actions.length)
+    const waves = playbackWaves.value
+    const cooldownMs = getWaveCooldown(waves.length)
 
-    for (const action of actions) {
-      await playAction(action, cooldownMs)
+    for (const wave of waves) {
+      await playWave(wave, cooldownMs)
     }
 
     if (!cancelled) {
@@ -133,7 +192,7 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
 
   function cancel(): void {
     cancelled = true
-    flyingProjectile.value = null
+    flyingProjectiles.value = []
     phase.value = 'done'
   }
 
@@ -153,11 +212,12 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
 
   return {
     unitHealth,
-    activeAttackerId,
-    activeTargetId,
-    hitTargetId,
-    flyingProjectile,
+    activeAttackerIds,
+    activeTargetIds,
+    hitTargetIds,
+    flyingProjectiles,
     damageFloats,
+    hitWords,
     phase,
     healthPercent,
     isAlive,

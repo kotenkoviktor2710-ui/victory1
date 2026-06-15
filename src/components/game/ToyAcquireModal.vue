@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { showRewarded } from '@/ads/ads'
 import LottieEffect from '@/components/game/LottieEffect.vue'
 import ToySprite from '@/components/game/ToySprite.vue'
 import { getToyNameByLevel } from '@/domain/data/toyLevelNames'
@@ -19,6 +20,10 @@ const characterName = computed(() => {
 
 function dismiss(): void {
   game.dismissToyCelebration()
+}
+
+function onClaim(): void {
+  showRewarded(() => dismiss())
 }
 </script>
 
@@ -53,7 +58,7 @@ function dismiss(): void {
           <button
             type="button"
             class="game-sketch-btn game-sketch-btn--yellow toy-acquire__btn game-text-stroke"
-            @click="dismiss"
+            @click="onClaim"
           >
             Забрать
           </button>

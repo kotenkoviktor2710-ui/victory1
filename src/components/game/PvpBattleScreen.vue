@@ -22,11 +22,12 @@ const emit = defineEmits<{
 }>()
 
 const {
-  activeAttackerId,
-  activeTargetId,
-  hitTargetId,
-  flyingProjectile,
+  activeAttackerIds,
+  activeTargetIds,
+  hitTargetIds,
+  flyingProjectiles,
   damageFloats,
+  hitWords,
   phase,
   healthPercent,
   isAlive,
@@ -41,11 +42,18 @@ interface ProjectilePoint {
   y: number
 }
 
-const projectilePoints = ref<{
+interface ProjectileVisual {
+  id: number
+  isCrit: boolean
   from: ProjectilePoint
   to: ProjectilePoint
   angle: number
-} | null>(null)
+  beamAngle: number
+  distance: number
+  trailLength: number
+}
+
+const projectileVisuals = ref<ProjectileVisual[]>([])
 
 const playerRoster = computed(() => props.snapshot.playerRoster)
 const enemyRoster = computed(() => props.snapshot.enemyRoster)
@@ -76,39 +84,58 @@ function anchorCenter(unitId: string): ProjectilePoint | null {
   }
 }
 
-async function updateProjectilePoints(): Promise<void> {
-  const projectile = flyingProjectile.value
-  if (!projectile) {
-    projectilePoints.value = null
+async function updateProjectileVisuals(): Promise<void> {
+  const projectiles = flyingProjectiles.value
+  if (projectiles.length === 0) {
+    projectileVisuals.value = []
     return
   }
 
   await nextTick()
-  const from = anchorCenter(projectile.attackerId)
-  const to = anchorCenter(projectile.targetId)
-  if (!from || !to) {
-    projectilePoints.value = null
-    return
+  const visuals: ProjectileVisual[] = []
+
+  for (const projectile of projectiles) {
+    const from = anchorCenter(projectile.attackerId)
+    const to = anchorCenter(projectile.targetId)
+    if (!from || !to) continue
+
+    const dx = to.x - from.x
+    const dy = to.y - from.y
+    const distance = Math.hypot(dx, dy)
+    const flightAngleDeg = (Math.atan2(dy, dx) * 180) / Math.PI
+
+    visuals.push({
+      id: projectile.id,
+      isCrit: projectile.isCrit,
+      from,
+      to,
+      angle: flightAngleDeg + SWORD_FLIGHT_OFFSET_DEG,
+      beamAngle: flightAngleDeg,
+      distance,
+      trailLength: Math.min(distance * 0.42, 132),
+    })
   }
 
-  const flightAngleDeg = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI
-  const angle = flightAngleDeg + SWORD_FLIGHT_OFFSET_DEG
-  projectilePoints.value = { from, to, angle }
+  projectileVisuals.value = visuals
 }
 
-watch(flyingProjectile, () => {
-  void updateProjectilePoints()
-})
+watch(flyingProjectiles, () => {
+  void updateProjectileVisuals()
+}, { deep: true })
 
 function damagesFor(unitId: string) {
   return damageFloats.value.filter((entry) => entry.unitId === unitId)
 }
 
+function hitWordsFor(unitId: string) {
+  return hitWords.value.filter((entry) => entry.unitId === unitId)
+}
+
 function fighterClass(unitId: string, side: 'player' | 'enemy'): Record<string, boolean> {
   return {
-    'battle-fighter--attacking': activeAttackerId.value === unitId,
-    'battle-fighter--target': activeTargetId.value === unitId,
-    'battle-fighter--hit': hitTargetId.value === unitId,
+    'battle-fighter--attacking': activeAttackerIds.value.includes(unitId),
+    'battle-fighter--target': activeTargetIds.value.includes(unitId),
+    'battle-fighter--hit': hitTargetIds.value.includes(unitId),
     'battle-fighter--down': !isAlive(unitId),
     'battle-fighter--player': side === 'player',
     'battle-fighter--enemy': side === 'enemy',
@@ -145,6 +172,7 @@ onMounted(() => {
               :toy-size="BATTLE_TOY_SIZE"
               :health-percent="healthPercent(entry.unitId)"
               :damages="damagesFor(entry.unitId)"
+              :hit-words="hitWordsFor(entry.unitId)"
               :fighter-class="fighterClass(entry.unitId, 'player')"
             />
           </div>
@@ -166,6 +194,7 @@ onMounted(() => {
               :toy-size="BATTLE_TOY_SIZE"
               :health-percent="healthPercent(entry.unitId)"
               :damages="damagesFor(entry.unitId)"
+              :hit-words="hitWordsFor(entry.unitId)"
               :fighter-class="fighterClass(entry.unitId, 'enemy')"
             />
           </div>
@@ -173,20 +202,58 @@ onMounted(() => {
       </section>
 
       <div
-        v-if="flyingProjectile && projectilePoints"
-        :key="flyingProjectile.id"
-        class="battle-screen__projectile"
-        :class="{ 'battle-screen__projectile--crit': flyingProjectile.isCrit }"
-        :style="{
-          '--from-x': `${projectilePoints.from.x}px`,
-          '--from-y': `${projectilePoints.from.y}px`,
-          '--to-x': `${projectilePoints.to.x}px`,
-          '--to-y': `${projectilePoints.to.y}px`,
-          '--projectile-angle': `${projectilePoints.angle}deg`,
-          backgroundImage: `url('${battleSword}')`,
-        }"
+        v-for="visual in projectileVisuals"
+        :key="visual.id"
+        class="battle-screen__projectile-group"
         aria-hidden="true"
-      />
+      >
+        <span
+          class="battle-screen__projectile-trail-glow"
+          :class="{ 'battle-screen__projectile-trail-glow--crit': visual.isCrit }"
+          :style="{
+            '--from-x': `${visual.from.x}px`,
+            '--from-y': `${visual.from.y}px`,
+            '--to-x': `${visual.to.x}px`,
+            '--to-y': `${visual.to.y}px`,
+            '--trail-length': `${visual.trailLength}px`,
+            '--beam-angle': `${visual.beamAngle}deg`,
+          }"
+        />
+        <span
+          class="battle-screen__projectile-trail"
+          :class="{ 'battle-screen__projectile-trail--crit': visual.isCrit }"
+          :style="{
+            '--from-x': `${visual.from.x}px`,
+            '--from-y': `${visual.from.y}px`,
+            '--to-x': `${visual.to.x}px`,
+            '--to-y': `${visual.to.y}px`,
+            '--trail-length': `${visual.trailLength}px`,
+            '--beam-angle': `${visual.beamAngle}deg`,
+          }"
+        />
+        <span
+          class="battle-screen__projectile-glow"
+          :class="{ 'battle-screen__projectile-glow--crit': visual.isCrit }"
+          :style="{
+            '--from-x': `${visual.from.x}px`,
+            '--from-y': `${visual.from.y}px`,
+            '--to-x': `${visual.to.x}px`,
+            '--to-y': `${visual.to.y}px`,
+          }"
+        />
+        <span
+          class="battle-screen__projectile"
+          :class="{ 'battle-screen__projectile--crit': visual.isCrit }"
+          :style="{
+            '--from-x': `${visual.from.x}px`,
+            '--from-y': `${visual.from.y}px`,
+            '--to-x': `${visual.to.x}px`,
+            '--to-y': `${visual.to.y}px`,
+            '--projectile-angle': `${visual.angle}deg`,
+            backgroundImage: `url('${battleSword}')`,
+          }"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -309,27 +376,163 @@ onMounted(() => {
   grid-row: 4 / 6;
 }
 
+.battle-screen__projectile-group {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.battle-screen__projectile-trail {
+  position: absolute;
+  left: var(--from-x);
+  top: var(--from-y);
+  width: var(--trail-length);
+  height: clamp(5px, 1.2vmin, 8px);
+  transform: translate(-100%, -50%) rotate(var(--beam-angle));
+  transform-origin: 100% 50%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 70, 50, 0.05) 18%,
+    rgba(255, 120, 70, 0.55) 52%,
+    rgba(255, 230, 170, 0.95) 82%,
+    rgba(255, 255, 230, 1) 100%
+  );
+  box-shadow: 0 0 14px rgba(255, 100, 70, 0.65);
+  opacity: 0;
+  animation: battle-trail-fly 0.56s linear forwards;
+}
+
+.battle-screen__projectile-trail--crit {
+  height: clamp(7px, 1.6vmin, 10px);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 140, 30, 0.08) 16%,
+    rgba(255, 170, 50, 0.65) 50%,
+    rgba(255, 240, 160, 1) 84%,
+    #fff 100%
+  );
+  box-shadow: 0 0 18px rgba(255, 170, 50, 0.85);
+  animation-duration: 0.46s;
+}
+
+.battle-screen__projectile-trail-glow {
+  position: absolute;
+  left: var(--from-x);
+  top: var(--from-y);
+  width: var(--trail-length);
+  height: clamp(14px, 3.2vmin, 22px);
+  transform: translate(-100%, -50%) rotate(var(--beam-angle));
+  transform-origin: 100% 50%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 180, 80, 0.08) 30%,
+    rgba(255, 200, 100, 0.28) 70%,
+    rgba(255, 220, 140, 0.42) 100%
+  );
+  filter: blur(4px);
+  opacity: 0;
+  animation: battle-trail-fly 0.56s linear forwards;
+}
+
+.battle-screen__projectile-trail-glow--crit {
+  height: clamp(18px, 4vmin, 28px);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 200, 80, 0.1) 28%,
+    rgba(255, 220, 120, 0.38) 72%,
+    rgba(255, 240, 180, 0.5) 100%
+  );
+  animation-duration: 0.46s;
+}
+
+.battle-screen__projectile-glow {
+  position: absolute;
+  left: var(--from-x);
+  top: var(--from-y);
+  width: clamp(18px, 4vmin, 28px);
+  height: clamp(18px, 4vmin, 28px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 220, 0.95) 0%, rgba(255, 160, 60, 0.55) 45%, transparent 72%);
+  opacity: 0;
+  animation: battle-glow-fly 0.56s linear forwards;
+}
+
+.battle-screen__projectile-glow--crit {
+  width: clamp(24px, 5vmin, 36px);
+  height: clamp(24px, 5vmin, 36px);
+  background: radial-gradient(circle, rgba(255, 255, 240, 1) 0%, rgba(255, 190, 60, 0.7) 42%, transparent 74%);
+  animation-duration: 0.46s;
+}
+
 .battle-screen__projectile {
   position: absolute;
   left: var(--from-x);
   top: var(--from-y);
-  z-index: 20;
   width: clamp(64px, 16vmin, 96px);
   height: clamp(64px, 16vmin, 96px);
   transform: translate(-50%, -50%) rotate(var(--projectile-angle));
-  pointer-events: none;
-  animation: battle-projectile-fly 0.56s linear forwards;
   background-position: center;
   background-size: contain;
   background-repeat: no-repeat;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+  filter:
+    drop-shadow(0 0 10px rgba(255, 240, 160, 0.95))
+    drop-shadow(0 0 18px rgba(255, 120, 60, 0.8))
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+  animation: battle-projectile-fly 0.56s linear forwards;
 }
 
 .battle-screen__projectile--crit {
   filter:
-    drop-shadow(0 0 10px rgba(255, 145, 0, 0.85))
+    drop-shadow(0 0 14px rgba(255, 220, 100, 1))
+    drop-shadow(0 0 24px rgba(255, 145, 0, 0.95))
     drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
   animation-duration: 0.46s;
+}
+
+@keyframes battle-trail-fly {
+  0% {
+    left: var(--from-x);
+    top: var(--from-y);
+    opacity: 0.25;
+    transform: translate(-100%, -50%) rotate(var(--beam-angle)) scaleX(0.55);
+  }
+  14% {
+    opacity: 1;
+    transform: translate(-100%, -50%) rotate(var(--beam-angle)) scaleX(1);
+  }
+  100% {
+    left: var(--to-x);
+    top: var(--to-y);
+    opacity: 0.45;
+    transform: translate(-100%, -50%) rotate(var(--beam-angle)) scaleX(1);
+  }
+}
+
+@keyframes battle-glow-fly {
+  0% {
+    left: var(--from-x);
+    top: var(--from-y);
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    left: var(--to-x);
+    top: var(--to-y);
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
 }
 
 @keyframes battle-projectile-fly {

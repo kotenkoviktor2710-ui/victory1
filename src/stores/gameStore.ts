@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-import { DAILY_QUEST_TARGETS, QUEST_REWARDS, type ChestType } from '@/domain/constants'
+import { AD_MILESTONE_REWARD_TOYS, AD_MILESTONE_VIEWS, DAILY_QUEST_TARGETS, QUEST_REWARDS, type ChestType } from '@/domain/constants'
 import { TOY_BY_ID, TOY_CATALOG, STARTER_TOY_ID } from '@/domain/data/toys'
 import type { PvpTeamSlot } from '@/domain/pvp/types'
 import { publishPvpDefense } from '@/yandex/pvpSync'
@@ -65,6 +65,9 @@ function defaultSave(): GameSave {
     unlockedLevels: [],
     unlockedDefinitionIds: [STARTER_TOY_ID],
     seenPvpSessionIds: [],
+    nextAttackAvailableAt: 0,
+    rewardedAdViews: 0,
+    adMilestonePendingToys: 0,
   }
 }
 
@@ -86,6 +89,9 @@ export const useGameStore = defineStore('game', () => {
   const unlockedLevels = ref<number[]>([])
   const unlockedDefinitionIds = ref<string[]>([STARTER_TOY_ID])
   const seenPvpSessionIds = ref<string[]>([])
+  const nextAttackAvailableAt = ref(0)
+  const rewardedAdViews = ref(0)
+  const adMilestonePendingToys = ref(0)
 
   let pvpDefenseSyncTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -118,6 +124,14 @@ export const useGameStore = defineStore('game', () => {
   /** Награда за оценку игры: персонаж на 1 уровень выше лучшего на поле. */
   const freeCharacterGrantLevel = computed(() =>
     Math.min(MAX_TOY_LEVEL, maxBoardLevel.value + 1),
+  )
+
+  const adMilestoneProgressLabel = computed(
+    () => `${rewardedAdViews.value} / ${AD_MILESTONE_VIEWS}`,
+  )
+
+  const adMilestoneProgressPercent = computed(
+    () => (rewardedAdViews.value / AD_MILESTONE_VIEWS) * 100,
   )
 
   const comboMultiplier = computed(() => COMBO_MULTIPLIERS[comboLevel.value] ?? 1)
@@ -262,6 +276,10 @@ export const useGameStore = defineStore('game', () => {
     return unlockedDefinitionIds.value.includes(definitionId)
   }
 
+  function isLevelUnlocked(level: number): boolean {
+    return unlockedLevels.value.includes(level)
+  }
+
   function enqueueToyCelebration(toy: PlacedToy): void {
     if (!tryUnlockLevel(toy.level)) return
 
@@ -297,12 +315,51 @@ export const useGameStore = defineStore('game', () => {
     return true
   }
 
+  function flushAdMilestonePendingGrants(): void {
+    while (adMilestonePendingToys.value > 0 && canAddToy()) {
+      const pending = beginGrant(STARTER_TOY_ID, shopAdGrantLevel.value)
+      if (!pending) break
+      adMilestonePendingToys.value -= 1
+      if (!commitToyToBoard(pending.toy)) break
+      unlockDefinition(pending.toy.definitionId)
+      enqueueToyCelebration(pending.toy)
+      removeUnusableToys([pending.toy.instanceId])
+    }
+  }
+
+  function recordRewardedAdView(): boolean {
+    if (rewardedAdViews.value >= AD_MILESTONE_VIEWS) return false
+
+    rewardedAdViews.value += 1
+    if (rewardedAdViews.value < AD_MILESTONE_VIEWS) return false
+
+    rewardedAdViews.value = 0
+    adMilestonePendingToys.value += AD_MILESTONE_REWARD_TOYS
+    return true
+  }
+
+  function beginAdMilestoneGrants(maxCount: number): PlacedToy[] {
+    const toys: PlacedToy[] = []
+    const limit = Math.min(maxCount, adMilestonePendingToys.value)
+
+    for (let i = 0; i < limit; i += 1) {
+      if (!canAddToy()) break
+      const pending = beginGrant(STARTER_TOY_ID, shopAdGrantLevel.value)
+      if (!pending) break
+      toys.push(pending.toy)
+      adMilestonePendingToys.value -= 1
+    }
+
+    return toys
+  }
+
   function finalizePurchase(toy: PlacedToy): void {
     if (!commitToyToBoard(toy)) return
 
     unlockDefinition(toy.definitionId)
     enqueueToyCelebration(toy)
     removeUnusableToys([toy.instanceId])
+    flushAdMilestonePendingGrants()
   }
 
   function buyToy(definitionId: string): boolean {
@@ -405,13 +462,18 @@ export const useGameStore = defineStore('game', () => {
     schedulePvpDefenseSync()
   }
 
-  function getPvpTeamSlots(): PvpTeamSlot[] {
-    const selected = teamInstanceIds.value
+  function getSelectedPvpTeamSlots(): PvpTeamSlot[] {
+    return teamInstanceIds.value
       .map((id) => board.value.find((toy) => toy.instanceId === id))
       .filter((toy): toy is PlacedToy => Boolean(toy))
       .map((toy) => ({ definitionId: toy.definitionId, level: toy.level }))
+      .slice(0, 5)
+  }
 
-    if (selected.length > 0) return selected.slice(0, 5)
+  function getPvpTeamSlots(): PvpTeamSlot[] {
+    const selected = getSelectedPvpTeamSlots()
+
+    if (selected.length > 0) return selected
 
     return [...board.value]
       .filter((toy) => Boolean(TOY_BY_ID[toy.definitionId]))
@@ -579,6 +641,9 @@ export const useGameStore = defineStore('game', () => {
       unlockedLevels: [...unlockedLevels.value],
       unlockedDefinitionIds: [...unlockedDefinitionIds.value],
       seenPvpSessionIds: [...seenPvpSessionIds.value],
+      nextAttackAvailableAt: nextAttackAvailableAt.value,
+      rewardedAdViews: rewardedAdViews.value,
+      adMilestonePendingToys: adMilestonePendingToys.value,
     }
   }
 
@@ -620,6 +685,9 @@ export const useGameStore = defineStore('game', () => {
       unlockDefinition(toy.definitionId)
     }
     seenPvpSessionIds.value = save.seenPvpSessionIds?.length ? [...save.seenPvpSessionIds] : []
+    nextAttackAvailableAt.value = save.nextAttackAvailableAt ?? 0
+    rewardedAdViews.value = Math.min(AD_MILESTONE_VIEWS, save.rewardedAdViews ?? 0)
+    adMilestonePendingToys.value = Math.max(0, save.adMilestonePendingToys ?? 0)
     removeUnusableToys()
     resetDailyQuestsIfNeeded()
     updatePvpRank()
@@ -646,6 +714,11 @@ export const useGameStore = defineStore('game', () => {
     unlockedLevels,
     unlockedDefinitionIds,
     seenPvpSessionIds,
+    nextAttackAvailableAt,
+    rewardedAdViews,
+    adMilestonePendingToys,
+    adMilestoneProgressLabel,
+    adMilestoneProgressPercent,
     comboProgress,
     comboLevel,
     floatingCoins,
@@ -658,6 +731,7 @@ export const useGameStore = defineStore('game', () => {
     comboMultiplier,
     dismissToyCelebration,
     isDefinitionUnlocked,
+    isLevelUnlocked,
     registerToyClick,
     getToyClickReward,
     decayCombo,
@@ -668,6 +742,9 @@ export const useGameStore = defineStore('game', () => {
     beginShopPurchase,
     beginShopAdGrant,
     beginFreeCharacterGrant,
+    recordRewardedAdView,
+    beginAdMilestoneGrants,
+    flushAdMilestonePendingGrants,
     commitToyToBoard,
     finalizePurchase,
     buyToy,
@@ -679,6 +756,7 @@ export const useGameStore = defineStore('game', () => {
     moveToy,
     toggleTeamToy,
     getPvpTeamSlots,
+    getSelectedPvpTeamSlots,
     calcPvpTeamPower,
     markPvpSessionSeen,
     syncPvpDefense,

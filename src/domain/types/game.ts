@@ -20,6 +20,12 @@ export interface GameSave {
   unlockedDefinitionIds: string[]
   /** ID сессий входящих атак, которые игрок уже видел. */
   seenPvpSessionIds: string[]
+  /** Unix-ms: когда снова можно напасть (0 — сразу). */
+  nextAttackAvailableAt: number
+  /** Учтённые просмотры rewarded-рекламы в текущем цикле (0…9). */
+  rewardedAdViews: number
+  /** Персонажи из бонуса, ожидающие свободного места на поле. */
+  adMilestonePendingToys: number
 }
 
 export type PvpRank =

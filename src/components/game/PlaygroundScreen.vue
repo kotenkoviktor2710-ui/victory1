@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import AdMilestoneBar from '@/components/game/AdMilestoneBar.vue'
 import BottomActionBar from '@/components/game/BottomActionBar.vue'
 import CollectionModal from '@/components/game/CollectionModal.vue'
 import FloorArena from '@/components/game/FloorArena.vue'
@@ -11,23 +12,46 @@ import PvpRewardModal from '@/components/game/PvpRewardModal.vue'
 import SideShopPanel from '@/components/game/SideShopPanel.vue'
 import ToyAcquireModal from '@/components/game/ToyAcquireModal.vue'
 import TopHud from '@/components/game/TopHud.vue'
+import { useAdMilestone } from '@/composables/useAdMilestone'
 import { useInboundAttack } from '@/composables/useInboundAttack'
+import { useAttackCooldown } from '@/composables/useAttackCooldown'
 import { usePvp } from '@/composables/usePvp'
 import type { BattleSnapshot } from '@/domain/formulas/combat'
+import { showRewarded } from '@/ads/ads'
 import { tryShowPlatformReviewNow } from '@/yandex/reviewPrompt'
 import { useGameStore } from '@/stores/gameStore'
 
 const game = useGameStore()
 const arenaRef = ref<InstanceType<typeof FloorArena> | null>(null)
+const adMilestoneRef = ref<InstanceType<typeof AdMilestoneBar> | null>(null)
 const showCollection = ref(false)
 const showPvp = ref(false)
 const battleSnapshot = ref<BattleSnapshot | null>(null)
 const rewardSnapshot = ref<BattleSnapshot | null>(null)
 const pvp = usePvp()
 const inbound = useInboundAttack()
+const {
+  canAttack,
+  isOnCooldown,
+  cooldownLabel,
+  startAttackCooldown,
+  resetAttackCooldown,
+} = useAttackCooldown()
 const isBattleLoading = computed(() => pvp.isPreparingBattle.value)
 const inboundAttack = computed(() => inbound.pendingInbound.value)
 const isBattleActive = computed(() => battleSnapshot.value !== null)
+
+function onRewardMilestone(fromRect: DOMRect): void {
+  const granted = arenaRef.value?.grantAdMilestoneToysWithFlight(fromRect) ?? 0
+  if (granted === 0) {
+    game.flushAdMilestonePendingGrants()
+  }
+}
+
+useAdMilestone(
+  () => adMilestoneRef.value?.getAnchorRect() ?? null,
+  onRewardMilestone,
+)
 
 function onShopBuy(fromRect: DOMRect): void {
   arenaRef.value?.purchaseShopToy(fromRect)
@@ -35,10 +59,6 @@ function onShopBuy(fromRect: DOMRect): void {
 
 function onShopGrant(fromRect: DOMRect): void {
   arenaRef.value?.grantShopAdToyWithFlight(fromRect)
-}
-
-function onCollectionBuy(definitionId: string, fromRect: DOMRect): void {
-  arenaRef.value?.purchaseToy(definitionId, fromRect)
 }
 
 async function onFreeToys(fromRect: DOMRect): Promise<void> {
@@ -53,8 +73,18 @@ async function onFreeToys(fromRect: DOMRect): Promise<void> {
 async function onStartBattle(): Promise<void> {
   const snapshot = await pvp.prepareOutboundBattle()
   if (!snapshot) return
+  startAttackCooldown()
   battleSnapshot.value = snapshot
   showPvp.value = false
+}
+
+function onAttack(): void {
+  if (!canAttack.value) return
+  showPvp.value = true
+}
+
+function onSkipAttackCooldown(): void {
+  showRewarded(() => resetAttackCooldown())
 }
 
 function onInboundAccept(): void {
@@ -102,9 +132,22 @@ onMounted(() => {
       <SideShopPanel @buy="onShopBuy" @grant="onShopGrant" />
     </div>
 
-    <BottomActionBar v-show="!isBattleActive" @attack="showPvp = true" />
+    <BottomActionBar
+      v-show="!isBattleActive"
+      :can-attack="canAttack"
+      :cooldown-label="cooldownLabel"
+      :show-cooldown-ad="isOnCooldown"
+      @attack="onAttack"
+      @skip-cooldown="onSkipAttackCooldown"
+    />
 
-    <CollectionModal :open="showCollection" @buy="onCollectionBuy" @close="showCollection = false" />
+    <AdMilestoneBar
+      v-show="!isBattleActive"
+      ref="adMilestoneRef"
+      class="playground__ad-milestone"
+    />
+
+    <CollectionModal :open="showCollection" @close="showCollection = false" />
     <PvpModal
       :open="showPvp"
       :loading="isBattleLoading"
@@ -176,5 +219,15 @@ onMounted(() => {
   display: flex;
   min-height: 0;
   overflow: visible;
+}
+
+.playground__ad-milestone {
+  position: absolute;
+  right: clamp(10px, 3vw, 18px);
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  left: auto;
+  z-index: 11;
+  width: min(62vw, 360px);
+  pointer-events: none;
 }
 </style>

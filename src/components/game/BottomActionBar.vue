@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+defineProps<{
+  canAttack: boolean
+  cooldownLabel: string
+  showCooldownAd: boolean
+}>()
+
 const emit = defineEmits<{
   attack: []
+  'skip-cooldown': []
 }>()
 
 const soundOn = ref(true)
@@ -44,9 +51,40 @@ function toggleMusic(): void {
       </button>
     </div>
 
-    <button type="button" class="game-img-btn game-img-btn--attack bottom-bar__attack" @click="emit('attack')">
-      <img class="game-img-btn__img" src="/images/attack-btn.png" alt="Напасть" />
-    </button>
+    <div class="bottom-bar__actions">
+      <div class="bottom-bar__attack-wrap">
+        <button
+          v-if="canAttack"
+          type="button"
+          class="game-img-btn game-img-btn--attack bottom-bar__attack"
+          @click="emit('attack')"
+        >
+          <img class="game-img-btn__img" src="/images/attack-btn.png" alt="Напасть" />
+        </button>
+
+        <div
+          v-else-if="cooldownLabel"
+          class="bottom-bar__cooldown-btn"
+          role="status"
+          aria-live="polite"
+          :aria-label="`Кулдаун нападения ${cooldownLabel}`"
+        >
+          <span class="bottom-bar__cooldown-title game-text-stroke">Напасть</span>
+          <span class="bottom-bar__cooldown game-text-stroke">{{ cooldownLabel }}</span>
+        </div>
+      </div>
+
+      <button
+        v-if="showCooldownAd"
+        type="button"
+        class="bottom-bar__ad-btn"
+        aria-label="Не ждать — сбросить ожидание за просмотр рекламы"
+        @click="emit('skip-cooldown')"
+      >
+        <span class="bottom-bar__ad-btn-text game-text-stroke">не ждать!</span>
+        <img class="bottom-bar__ad-btn-icon" src="/images/ads.png" alt="" aria-hidden="true" />
+      </button>
+    </div>
 
     <div class="bottom-bar__spacer" aria-hidden="true" />
   </footer>
@@ -56,8 +94,7 @@ function toggleMusic(): void {
 .bottom-bar {
   position: relative;
   z-index: 10;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
@@ -66,9 +103,24 @@ function toggleMusic(): void {
 
 .bottom-bar__left {
   display: flex;
+  flex: 1;
   gap: 16px;
-  justify-self: start;
+  justify-content: flex-start;
   padding-left: 12px;
+  min-width: 0;
+}
+
+.bottom-bar__spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.bottom-bar__actions {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(8px, 2.2vw, 14px);
+  flex-shrink: 0;
+  --bottom-action-btn-width: clamp(168px, 46vw, 232px);
 }
 
 .bottom-bar__icon-btn {
@@ -133,7 +185,83 @@ function toggleMusic(): void {
   transform: scale(1.48);
 }
 
+.bottom-bar__attack-wrap {
+  position: relative;
+}
+
 .bottom-bar__attack {
-  justify-self: center;
+  display: block;
+}
+
+.bottom-bar__attack :deep(.game-img-btn__img) {
+  width: var(--bottom-action-btn-width);
+  height: auto;
+}
+
+.bottom-bar__cooldown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.8vw, 16px);
+  width: var(--bottom-action-btn-width);
+  min-height: clamp(54px, 15vw, 72px);
+  padding: clamp(10px, 2.8vw, 14px) clamp(14px, 3.6vw, 18px);
+  border: 3px solid #3d0a0a;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #a32828 0%, #7d1818 45%, #5a1010 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.24),
+    2px 3px 0 rgba(0, 0, 0, 0.42);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.bottom-bar__cooldown-title {
+  font-size: clamp(22px, 5.8vw, 32px);
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
+}
+
+.bottom-bar__ad-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 1.2vw, 8px);
+  width: var(--bottom-action-btn-width);
+  min-height: 100%;
+  padding: 8px 10px;
+  border: 2.5px solid var(--game-blue-deep);
+  border-radius: 6px;
+  background: var(--game-panel-texture) center center / cover no-repeat;
+  box-shadow: var(--game-shadow-inset), var(--game-shadow);
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+
+.bottom-bar__ad-btn:active {
+  transform: scale(0.96);
+}
+
+.bottom-bar__ad-btn-text {
+  font-size: clamp(20px, 5.4vw, 30px);
+  white-space: nowrap;
+}
+
+.bottom-bar__ad-btn-icon {
+  flex-shrink: 0;
+  width: clamp(32px, 8.5vw, 42px);
+  height: clamp(32px, 8.5vw, 42px);
+  object-fit: contain;
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+}
+
+.bottom-bar__cooldown {
+  font-size: clamp(18px, 4.8vw, 26px);
+  line-height: 1;
+  color: #fff;
+  white-space: nowrap;
 }
 </style>

@@ -498,6 +498,7 @@ export function showRewarded(onReward: () => void): void {
       // eslint-disable-next-line no-console
       console.info('[ads] rewarded (dev stub) — granting immediately')
       onReward()
+      window.dispatchEvent(new CustomEvent('ads:rewarded'))
     }
     return
   }
@@ -526,7 +527,10 @@ export function showRewarded(onReward: () => void): void {
       onClose: () => {
         lastAnyAdAt = getServerTime()
         finish()
-        if (granted) onReward()
+        if (granted) {
+          onReward()
+          window.dispatchEvent(new CustomEvent('ads:rewarded'))
+        }
       },
       onError: () => {
         finish()
