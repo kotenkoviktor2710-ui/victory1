@@ -84,7 +84,7 @@ function isToyDragging(instanceId: string): boolean {
   return dragFromId.value === instanceId && isDragging.value
 }
 
-const FIELD_TOY_SIZE = 'clamp(140px, 36vw, 220px)'
+const FIELD_TOY_SIZE = 'var(--game-field-toy-size, clamp(140px, 36vw, 220px))'
 
 function wobbleDelay(instanceId: string): number {
   let hash = 0

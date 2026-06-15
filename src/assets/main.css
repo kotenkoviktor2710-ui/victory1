@@ -1,5 +1,6 @@
 @import './base.css';
 @import './game-theme.css';
+@import './responsive.css';
 
 #app {
   width: 100%;

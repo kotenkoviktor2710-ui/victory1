@@ -125,21 +125,24 @@ onMounted(() => {
     <div v-show="!isBattleActive" class="playground__bg" aria-hidden="true" />
     <div v-show="!isBattleActive" class="playground__shade" aria-hidden="true" />
 
-    <TopHud v-show="!isBattleActive" @collection="showCollection = true" @free-toys="onFreeToys" />
+    <div v-show="!isBattleActive" class="playground__header">
+      <TopHud @collection="showCollection = true" @free-toys="onFreeToys" />
+    </div>
 
     <div v-show="!isBattleActive" class="playground__stage">
       <FloorArena ref="arenaRef" />
       <SideShopPanel @buy="onShopBuy" @grant="onShopGrant" />
     </div>
 
-    <BottomActionBar
-      v-show="!isBattleActive"
-      :can-attack="canAttack"
-      :cooldown-label="cooldownLabel"
-      :show-cooldown-ad="isOnCooldown"
-      @attack="onAttack"
-      @skip-cooldown="onSkipAttackCooldown"
-    />
+    <div v-show="!isBattleActive" class="playground__footer">
+      <BottomActionBar
+        :can-attack="canAttack"
+        :cooldown-label="cooldownLabel"
+        :show-cooldown-ad="isOnCooldown"
+        @attack="onAttack"
+        @skip-cooldown="onSkipAttackCooldown"
+      />
+    </div>
 
     <AdMilestoneBar
       v-show="!isBattleActive"
@@ -210,6 +213,26 @@ onMounted(() => {
       rgba(6, 10, 20, 0.55) 100%
     ),
     radial-gradient(ellipse 120% 90% at 50% 45%, transparent 35%, rgba(0, 0, 0, 0.28) 100%);
+}
+
+.playground__header {
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.playground__footer {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.playground__footer :deep(.bottom-bar) {
+  flex: 1;
+  width: 100%;
 }
 
 .playground__stage {

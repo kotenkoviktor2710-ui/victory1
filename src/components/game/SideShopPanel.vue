@@ -27,7 +27,7 @@ const canBuyFeatured = computed(
 
 const canWatchAd = computed(() => game.canAddToy())
 
-const TOY_PREVIEW_SIZE = 'clamp(94px, 24vw, 180px)'
+const TOY_PREVIEW_SIZE = 'var(--game-side-toy-size, clamp(94px, 24vw, 180px))'
 
 function buyFeatured(): void {
   const rect = shopBtnRef.value?.getBoundingClientRect()

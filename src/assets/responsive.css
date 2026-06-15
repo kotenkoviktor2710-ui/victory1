@@ -1,0 +1,702 @@
+/**
+ * Адаптивные стили — только внутри media queries.
+ * Desktop (≥1025px): переменные не переопределяются, fallback в game-theme = текущий вид.
+ */
+
+/* ── Tablet (≤1024px) ─────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  :root {
+    --game-hud-btn-width: clamp(130px, 34vw, 210px);
+    --game-coin-banner-width: clamp(130px, 34vw, 210px);
+    --game-side-card-width: clamp(128px, 30vw, 200px);
+    --game-attack-btn-width: clamp(148px, 42vw, 210px);
+    --game-combo-bar-width: min(440px, 86vw);
+    --game-field-toy-size: clamp(120px, 32vw, 190px);
+    --game-side-toy-size: clamp(72px, 20vw, 150px);
+    --game-battle-toy-size: clamp(100px, 19vmin, 175px);
+    --game-battle-hp-width: clamp(62px, 10vmin, 92px);
+    --game-battle-hp-height: clamp(6px, 1.4vmin, 9px);
+    --game-modal-grid-cols: 4;
+    --game-modal-picker-hero: min(104px, 20vw);
+  }
+
+  html body .playground .playground__stage {
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  html body .playground .floor-arena {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  html body .playground .side-shop {
+    flex-direction: row;
+    justify-content: center;
+    align-self: stretch;
+    flex-shrink: 0;
+    gap: 12px;
+    padding: 4px 10px 8px;
+  }
+}
+
+/* Tablet/mobile portrait: кнопки + монеты в 1 строку */
+@media (max-width: 1024px) and (orientation: portrait) {
+  :root {
+    --game-hud-row-height: clamp(52px, 14vw, 64px);
+    --game-coin-banner-width: clamp(108px, 30vw, 168px);
+    --game-combo-bar-width: min(100%, 100%);
+    --game-attack-btn-width: clamp(168px, 46vw, 220px);
+  }
+
+  html body .playground .top-hud {
+    padding-bottom: 2px;
+    gap: 2px;
+  }
+
+  html body .playground .top-hud__main {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+  }
+
+  html body .playground .top-hud__left {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    height: var(--game-hud-row-height);
+  }
+
+  html body .playground .top-hud__right {
+    width: auto;
+    min-width: 0;
+    height: var(--game-hud-row-height);
+    align-items: center;
+    gap: 6px;
+  }
+
+  html body .playground .top-hud__audio {
+    --game-hud-audio-icon-size: 32px;
+    --game-hud-audio-gap: 6px;
+  }
+
+  html body .playground .top-hud__audio .hud-audio__btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  html body .playground .top-hud__center {
+    display: none;
+  }
+
+  html body .playground .top-hud__combo-row {
+    display: flex;
+    padding-left: 4px;
+  }
+
+  html body .playground .top-hud__combo-circle {
+    width: clamp(68px, 19vw, 96px);
+    height: clamp(68px, 19vw, 96px);
+  }
+
+  html body .playground .top-hud__combo-circle .combo-circle__label {
+    font-size: clamp(30px, 8.5vw, 46px);
+  }
+
+  html body .playground .top-hud .game-img-btn--hud {
+    height: var(--game-hud-row-height);
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  html body .playground .top-hud .game-img-btn--hud .game-img-btn__img {
+    width: auto;
+    height: 100%;
+    max-width: none;
+    object-fit: contain;
+  }
+
+  html body .playground .top-hud .game-coin-banner {
+    height: var(--game-hud-row-height);
+    min-height: var(--game-hud-row-height);
+    padding: 4px 10px 4px 12px;
+    box-sizing: border-box;
+  }
+
+  html body .playground .top-hud .game-coin-banner__value {
+    font-size: clamp(20px, 5.6vw, 30px);
+  }
+
+  html body .playground .top-hud .game-coin-banner__icon {
+    width: clamp(36px, 10vw, 46px);
+    height: clamp(36px, 10vw, 46px);
+  }
+
+  /* Нижняя панель: напасть (центр) | реклама (справа) */
+  html body .playground .bottom-bar {
+    --bottom-bar-row-height: clamp(52px, 14vw, 64px);
+    gap: 6px;
+    padding: 8px;
+    min-height: var(--bottom-bar-row-height);
+  }
+
+  html body .playground .bottom-bar__attack .game-img-btn__img {
+    max-height: var(--bottom-bar-row-height);
+  }
+
+  html body .playground .bottom-bar__cooldown-btn {
+    height: var(--bottom-bar-row-height);
+    min-height: 0;
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  html body .playground .bottom-bar__ad-btn {
+    gap: 4px;
+    height: var(--bottom-bar-row-height);
+    padding: 0 6px;
+  }
+
+  html body .playground .bottom-bar__actions {
+    gap: 8px;
+  }
+
+  html body .playground .bottom-bar__attack .game-img-btn__img {
+    width: var(--bottom-action-btn-width, var(--game-attack-btn-width));
+    max-width: 100%;
+  }
+
+  html body .playground .bottom-bar__cooldown-title {
+    font-size: clamp(16px, 4.4vw, 22px);
+  }
+
+  html body .playground .bottom-bar__cooldown {
+    font-size: clamp(14px, 3.8vw, 18px);
+  }
+
+  html body .playground .bottom-bar__ad-btn-text {
+    font-size: clamp(14px, 4vw, 20px);
+  }
+
+  html body .playground .bottom-bar__ad-btn-icon {
+    width: clamp(22px, 6vw, 28px);
+    height: clamp(22px, 6vw, 28px);
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad {
+    gap: 4px;
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__attack-wrap,
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown-btn,
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown-title {
+    font-size: clamp(12px, 3.2vw, 15px);
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown {
+    font-size: clamp(11px, 3vw, 14px);
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn-text {
+    font-size: clamp(11px, 3vw, 14px);
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn-icon {
+    width: clamp(16px, 4.5vw, 20px);
+    height: clamp(16px, 4.5vw, 20px);
+  }
+}
+
+/* Tablet landscape: нижняя панель тоже в 1 строку */
+@media (max-width: 1024px) and (orientation: landscape) {
+  html body .playground .playground__stage {
+    flex-direction: row;
+  }
+
+  html body .playground .side-shop {
+    flex-direction: column;
+    align-self: center;
+    padding: 8px 6px 8px 0;
+  }
+
+  html body .playground .bottom-bar {
+    --bottom-bar-row-height: clamp(48px, 12vw, 58px);
+    gap: 6px;
+    padding: 8px;
+    min-height: var(--bottom-bar-row-height);
+  }
+
+  html body .playground .bottom-bar__attack .game-img-btn__img {
+    max-height: var(--bottom-bar-row-height);
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad {
+    gap: 4px;
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown-title {
+    font-size: clamp(11px, 2.8vw, 14px);
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn-text {
+    font-size: clamp(10px, 2.6vw, 13px);
+  }
+
+  html body .playground .bottom-bar__cooldown-btn {
+    height: var(--bottom-bar-row-height);
+    min-height: 0;
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  html body .playground .bottom-bar__actions {
+    gap: 8px;
+  }
+
+  html body .playground .bottom-bar__ad-btn {
+    gap: 4px;
+    height: var(--bottom-bar-row-height);
+    padding: 0 8px;
+  }
+
+  html body .playground .bottom-bar__ad-btn-icon {
+    width: clamp(20px, 5.5vw, 26px);
+    height: clamp(20px, 5.5vw, 26px);
+  }
+}
+
+/* Desktop: крупная «Напасть» по центру, реклама в правом углу */
+@media (min-width: 1025px) {
+  :root {
+    --game-attack-btn-width: clamp(200px, 52vw, 280px);
+    --game-bottom-icon-size: 34px;
+  }
+
+  html body .playground .top-hud__right {
+    width: var(--game-coin-banner-width, clamp(172px, 46vw, 240px));
+    gap: 0;
+  }
+
+  html body .playground .top-hud__audio {
+    display: none;
+  }
+
+  html body .playground .bottom-bar {
+    --bottom-bar-row-height: clamp(60px, 16vw, 76px);
+    gap: 10px;
+    padding: 10px 14px;
+    min-height: var(--bottom-bar-row-height);
+  }
+
+  html body .playground .bottom-bar__attack .game-img-btn__img {
+    max-height: var(--bottom-bar-row-height);
+  }
+
+  html body .playground .bottom-bar__actions {
+    justify-self: center;
+    width: auto;
+  }
+
+  html body .playground .playground__ad-milestone {
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    width: min(42vw, 420px);
+  }
+}
+
+/* ── Mobile (≤767px) ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+  :root {
+    --game-hud-btn-width: clamp(68px, 19vw, 108px);
+    --game-coin-banner-width: clamp(108px, 30vw, 168px);
+    --game-side-card-width: clamp(108px, 28vw, 148px);
+    --game-attack-btn-width: clamp(124px, 36vw, 168px);
+    --game-combo-bar-width: min(100%, 100%);
+    --game-field-toy-size: clamp(96px, 27vw, 150px);
+    --game-side-toy-size: clamp(58px, 16vw, 108px);
+    --game-battle-toy-size: clamp(82px, 17vmin, 145px);
+    --game-battle-hp-width: clamp(58px, 9.5vmin, 86px);
+    --game-battle-hp-height: clamp(6px, 1.3vmin, 8px);
+    --game-modal-grid-cols: 3;
+    --game-modal-picker-hero: min(88px, 24vw);
+    --game-hud-icon-size: 40px;
+  }
+
+  html body .playground .top-hud {
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+    gap: 4px;
+    padding: 6px 4px 4px 6px;
+    padding-top: calc(6px + env(safe-area-inset-top, 0px));
+  }
+
+  html body .playground .top-hud__main {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+  }
+
+  html body .playground .top-hud__left {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+  }
+
+  html body .playground .top-hud__right {
+    width: auto;
+    min-width: 0;
+    height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    gap: 6px;
+  }
+
+  html body .playground .top-hud__audio {
+    --game-hud-audio-icon-size: 32px;
+    --game-hud-audio-gap: 6px;
+  }
+
+  html body .playground .top-hud__center {
+    display: none;
+  }
+
+  html body .playground .top-hud__combo-row {
+    display: flex;
+    padding-left: 2px;
+  }
+
+  html body .playground .top-hud__combo-circle {
+    width: clamp(64px, 18vw, 88px);
+    height: clamp(64px, 18vw, 88px);
+  }
+
+  html body .playground .top-hud__combo-circle .combo-circle__label {
+    font-size: clamp(28px, 8vw, 42px);
+  }
+
+  html body .playground .top-hud .game-img-btn--hud {
+    height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    width: auto;
+  }
+
+  html body .playground .top-hud .game-img-btn--hud .game-img-btn__img {
+    height: 100%;
+    width: auto;
+  }
+
+  html body .playground .top-hud .game-coin-banner {
+    height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    min-height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    padding: 4px 10px 4px 12px;
+    box-sizing: border-box;
+  }
+
+  html body .playground .top-hud .game-coin-banner__value {
+    font-size: clamp(20px, 5.6vw, 30px);
+  }
+
+  html body .playground .top-hud .game-coin-banner__icon {
+    width: clamp(36px, 10vw, 46px);
+    height: clamp(36px, 10vw, 46px);
+  }
+
+  html body .playground .playground__stage {
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  html body .playground .floor-arena {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  html body .playground .side-shop {
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
+    align-self: stretch;
+    flex-shrink: 0;
+    gap: 10px;
+    padding: 4px 8px 6px;
+  }
+
+  html body .playground .bottom-bar {
+    gap: 4px;
+    padding: 8px;
+  }
+
+  html body .playground .bottom-bar__actions {
+    gap: 8px;
+  }
+
+  html body .playground .bottom-bar__cooldown-btn {
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  html body .playground .bottom-bar__ad-btn {
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  html body .playground .bottom-bar__ad-btn-icon {
+    width: clamp(22px, 6vw, 28px);
+    height: clamp(22px, 6vw, 28px);
+  }
+
+  html body .playground .bottom-bar__actions {
+    gap: 8px;
+  }
+
+  html body .playground .bottom-bar__attack .game-img-btn__img,
+  html body .playground .bottom-bar__cooldown-btn {
+    width: var(--bottom-action-btn-width, var(--game-attack-btn-width));
+  }
+
+  html body .playground .bottom-bar__cooldown-title {
+    font-size: clamp(18px, 5vw, 26px);
+  }
+
+  html body .playground .bottom-bar__cooldown {
+    font-size: clamp(15px, 4.2vw, 22px);
+  }
+
+  html body .game-modal-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  html body .game-modal {
+    max-height: 92dvh;
+  }
+
+  html body .game-modal--picker {
+    width: min(100%, 100%);
+  }
+
+  html body .game-modal__header {
+    padding: 14px 14px 12px;
+    gap: 8px;
+  }
+
+  html body .game-modal__body {
+    padding: 12px 14px 18px;
+  }
+
+  html body .game-modal-picker__grid {
+    grid-template-columns: repeat(var(--game-modal-grid-cols, 3), minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  html body .game-modal-picker__locked {
+    width: var(--game-modal-picker-hero, min(88px, 24vw));
+    height: var(--game-modal-picker-hero, min(88px, 24vw));
+  }
+
+  html body .collection-grid {
+    grid-template-columns: repeat(var(--game-modal-grid-cols, 3), minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  html body .battle-screen__arena {
+    gap: 4px;
+    padding:
+      calc(8px + env(safe-area-inset-top, 0px))
+      clamp(6px, 2vw, 14px)
+      calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  html body .battle-screen__formation {
+    column-gap: clamp(4px, 1.5vw, 10px);
+  }
+}
+
+
+/* ── Mobile landscape (низкая высота) ────────────────────────── */
+@media (max-height: 520px) and (orientation: landscape) {
+  :root {
+    --game-hud-btn-width: clamp(56px, 14vw, 88px);
+    --game-coin-banner-width: clamp(96px, 24vw, 140px);
+    --game-side-card-width: clamp(88px, 18vw, 120px);
+    --game-attack-btn-width: clamp(108px, 28vw, 148px);
+    --game-field-toy-size: clamp(72px, 18vw, 110px);
+    --game-side-toy-size: clamp(48px, 12vw, 80px);
+    --game-battle-toy-size: clamp(64px, 14vmin, 105px);
+    --game-battle-hp-width: clamp(52px, 8.5vmin, 78px);
+    --game-battle-hp-height: clamp(5px, 1.2vmin, 7px);
+    --game-modal-grid-cols: 4;
+  }
+
+  html body .playground .top-hud {
+    padding-top: calc(4px + env(safe-area-inset-top, 0px));
+  }
+
+  html body .playground .top-hud__main {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  html body .playground .top-hud__left {
+    flex-direction: row;
+    gap: 4px;
+    width: auto;
+  }
+
+  html body .playground .top-hud__right {
+    width: auto;
+  }
+
+  html body .playground .playground__stage {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  html body .playground .floor-arena {
+    flex: 1;
+    min-width: 0;
+  }
+
+  html body .playground .side-shop {
+    flex-direction: column;
+    justify-content: center;
+    align-self: center;
+    gap: 6px;
+    padding: 4px 4px 4px 0;
+    flex-shrink: 0;
+  }
+
+  html body .playground .bottom-bar {
+    padding: 8px;
+  }
+
+  html body .battle-screen__arena {
+    padding:
+      calc(4px + env(safe-area-inset-top, 0px))
+      clamp(4px, 1.5vw, 10px)
+      calc(6px + env(safe-area-inset-bottom, 0px));
+    gap: 2px;
+  }
+
+  html body .battle-screen__formation {
+    column-gap: 4px;
+  }
+}
+
+/* ── Очень узкий экран (≤360px) ──────────────────────────────── */
+@media (max-width: 360px) {
+  :root {
+    --game-attack-btn-width: clamp(108px, 34vw, 148px);
+    --game-modal-grid-cols: 3;
+  }
+
+  html body .playground .bottom-bar__ad-btn-text {
+    font-size: clamp(16px, 4.8vw, 22px);
+  }
+}
+
+/* ── Touch targets (только мобильные/планшеты) ───────────────── */
+@media (max-width: 1024px) {
+  html body .playground .bottom-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html body .playground .bottom-bar__left {
+    display: none;
+  }
+
+  html body .playground .bottom-bar__spacer {
+    display: none;
+  }
+
+  html body .playground .playground__ad-milestone {
+    display: none;
+  }
+
+  html body .playground .bottom-bar__actions {
+    grid-column: 1;
+    justify-self: center;
+    width: 100%;
+  }
+
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__attack-wrap,
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown-btn,
+  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  html body .playground .top-hud__right {
+    width: auto;
+    gap: 6px;
+  }
+
+  html body .playground .top-hud__audio {
+    display: flex;
+  }
+
+  html body .playground .top-hud__hud-img--full {
+    display: none;
+  }
+
+  html body .playground .top-hud__hud-img--icon {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  html body .playground .top-hud .game-img-btn--hud {
+    width: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    min-width: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+  }
+
+  html body .playground .top-hud__audio .hud-audio__btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  html body .playground .game-hud-icon-btn,
+  html body .game-modal__close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ── Оверлеи награды / нового персонажа ───────────────────────── */
+@media (max-width: 767px) {
+  html body .pvp-reward-overlay,
+  html body .toy-acquire-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  html body .pvp-reward {
+    width: min(100%, 100%);
+    max-height: 92dvh;
+    overflow-y: auto;
+  }
+
+  html body .toy-acquire {
+    width: min(100%, 100%);
+    max-height: 92dvh;
+    overflow-y: auto;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  html body .pvp-reward-overlay,
+  html body .toy-acquire-overlay {
+    align-items: center;
+    padding: 8px;
+  }
+}

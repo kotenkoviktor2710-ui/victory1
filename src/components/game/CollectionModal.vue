@@ -69,7 +69,7 @@ function cardTone(level: number): number {
 <style scoped>
 .collection-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--game-modal-grid-cols, 4), minmax(0, 1fr));
   gap: clamp(8px, 2vw, 12px);
   padding: 4px 2px 6px;
 }

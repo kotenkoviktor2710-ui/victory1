@@ -6,7 +6,7 @@ import type { BattleSnapshot } from '@/domain/formulas/combat'
 import { useBattlePlayback } from '@/composables/useBattlePlayback'
 import { assetUrl } from '@/shared/utils/assetUrl'
 
-const BATTLE_TOY_SIZE = 'clamp(100px, 18vmin, 180px)'
+const BATTLE_TOY_SIZE = 'var(--game-battle-toy-size, clamp(120px, 22vmin, 210px))'
 const VERTICAL_FIGHTER_LIMIT = 3
 /** sword.png: рукоять сверху, остриё снизу — выравниваем остриём по вектору полёта */
 const SWORD_FLIGHT_OFFSET_DEG = -90

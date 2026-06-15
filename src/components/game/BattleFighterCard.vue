@@ -59,7 +59,7 @@ defineProps<{
 .battle-fighter {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   opacity: 1;
   transition:
     transform 0.24s ease,
@@ -97,22 +97,22 @@ defineProps<{
 }
 
 .battle-fighter__hp {
-  width: clamp(100px, 18vmin, 160px);
-  padding: 3px;
-  border: 3px solid var(--game-ink);
-  border-radius: 6px;
+  width: var(--game-battle-hp-width, clamp(68px, 11vmin, 100px));
+  padding: 2px;
+  border: 2px solid var(--game-ink);
+  border-radius: 5px;
   background: #fff;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    2px 2px 0 rgba(0, 0, 0, 0.38);
-  filter: drop-shadow(1px 2px 0 rgba(0, 0, 0, 0.25));
+    1px 2px 0 rgba(0, 0, 0, 0.32);
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.2));
 }
 
 .battle-fighter__hp-track {
   position: relative;
-  height: clamp(12px, 2.8vmin, 18px);
-  border: 2px solid var(--game-blue-deep);
-  border-radius: 4px;
+  height: var(--game-battle-hp-height, clamp(7px, 1.5vmin, 10px));
+  border: 1.5px solid var(--game-blue-deep);
+  border-radius: 3px;
   background: linear-gradient(180deg, #0a1a30 0%, #143052 42%, #0d2644 100%);
   box-shadow:
     inset 0 2px 6px rgba(0, 0, 0, 0.5),
