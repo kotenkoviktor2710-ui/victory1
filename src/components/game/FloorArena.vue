@@ -281,7 +281,14 @@ onUnmounted(() => {
   tapReactTimers.clear()
 })
 
-defineExpose({ purchaseToy, purchaseShopToy, grantToyWithFlight, grantRandomToyWithFlight, grantShopAdToyWithFlight, grantFreeCharacterWithFlight })
+defineExpose({
+  purchaseToy,
+  purchaseShopToy,
+  grantToyWithFlight,
+  grantRandomToyWithFlight,
+  grantShopAdToyWithFlight,
+  grantFreeCharacterWithFlight,
+})
 </script>
 
 <template>
@@ -317,11 +324,7 @@ defineExpose({ purchaseToy, purchaseShopToy, grantToyWithFlight, grantRandomToyW
         @pointerdown="onToyPointerDown(toy, $event)"
         @pointerup="onToyPointerUp(toy, $event)"
       >
-        <ToySprite
-          :definition-id="toy.definitionId"
-          :level="toy.level"
-          :size="FIELD_TOY_SIZE"
-        />
+        <ToySprite :definition-id="toy.definitionId" :level="toy.level" :size="FIELD_TOY_SIZE" />
       </button>
     </div>
 
@@ -357,11 +360,7 @@ defineExpose({ purchaseToy, purchaseShopToy, grantToyWithFlight, grantRandomToyW
         class="floor-arena__merge-burst"
         :style="{ left: `${burst.x}px`, top: `${burst.y}px` }"
       >
-        <LottieEffect
-          :path="MERGE_EFFECT"
-          :loop="false"
-          @complete="removeMergeBurst(burst.id)"
-        />
+        <LottieEffect :path="MERGE_EFFECT" :loop="false" @complete="removeMergeBurst(burst.id)" />
       </div>
     </div>
 
