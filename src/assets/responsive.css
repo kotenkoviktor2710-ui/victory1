@@ -147,7 +147,8 @@
     align-items: center;
     gap: 6px;
     width: auto;
-    height: var(--game-hud-row-height);
+    min-height: var(--game-hud-row-height);
+    height: auto;
   }
 
   html body .playground .top-hud__right {
@@ -187,7 +188,8 @@
   }
 
   html body .playground .top-hud .game-hud-menu-btn {
-    height: var(--game-hud-row-height);
+    min-height: var(--game-hud-row-height);
+    height: auto;
     width: auto;
     min-width: 0;
     flex-shrink: 0;
@@ -482,7 +484,8 @@
     align-items: center;
     gap: 6px;
     width: auto;
-    height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    min-height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    height: auto;
   }
 
   html body .playground .top-hud__right {
@@ -516,7 +519,8 @@
   }
 
   html body .playground .top-hud .game-hud-menu-btn {
-    height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    min-height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    height: auto;
     width: auto;
   }
 
