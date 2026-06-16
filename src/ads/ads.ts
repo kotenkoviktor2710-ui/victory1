@@ -10,6 +10,7 @@ import {
   type YsdkFullscreenCallbacks,
   type YsdkRewardedCallbacks,
 } from '@/yandex/sdk'
+import { scheduleAfterServerMs } from '@/yandex/serverTimeTimers'
 
 const FIRST_AD_GAP = 60_000 // no interstitial in first minute (Yandex requirement)
 const INTERSTITIAL_MIN_GAP = 90_000 // our cooldown — 30s stricter than SDK
@@ -133,17 +134,17 @@ export function runWhenSafeFromAds(fn: () => void): void {
       if (adsPlaying()) {
         window.addEventListener(
           'ads:resume',
-          () => window.setTimeout(attempt, UI_AFTER_AD_GAP),
+          () => scheduleAfterServerMs(UI_AFTER_AD_GAP, attempt),
           { once: true },
         )
       } else {
-        window.setTimeout(attempt, 500)
+        scheduleAfterServerMs(500, attempt)
       }
       return
     }
     const elapsed = msSinceLastAd()
     if (elapsed < UI_AFTER_AD_GAP) {
-      window.setTimeout(attempt, UI_AFTER_AD_GAP - elapsed)
+      scheduleAfterServerMs(UI_AFTER_AD_GAP - elapsed, attempt)
       return
     }
     fn()
@@ -381,7 +382,7 @@ export function showScheduledGameplayInterstitialThen(onDone: () => void): void 
 
     const wait = msUntilInterstitialReady({ scheduled: true })
     if (wait > 0) {
-      window.setTimeout(attempt, wait)
+      scheduleAfterServerMs(wait, attempt)
       return
     }
 

@@ -5,6 +5,7 @@ import { AD_MILESTONE_REWARD_TOYS, AD_MILESTONE_VIEWS, DAILY_QUEST_TARGETS, QUES
 import { TOY_BY_ID, TOY_CATALOG, STARTER_TOY_ID } from '@/domain/data/toys'
 import type { PvpTeamSlot } from '@/domain/pvp/types'
 import { publishPvpDefense } from '@/yandex/pvpSync'
+import { getServerDateKey } from '@/yandex/serverTimeTimers'
 import { MAX_FIELD_TOYS, clampFieldPosition, normalizeBoard, randomFieldPosition } from '@/domain/field'
 import { getRemovableToyIds, pickBoardToysForReplacement } from '@/domain/fieldCleanup'
 import {
@@ -37,7 +38,7 @@ function createInstanceId(): string {
 }
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10)
+  return getServerDateKey()
 }
 
 function defaultSave(): GameSave {

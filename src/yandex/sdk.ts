@@ -35,7 +35,7 @@ let lang: string = 'ru'
 let initPromise: Promise<Ysdk | null> | null = null
 let sessionStartMs: number | null = null
 
-/** Серверное время Yandex SDK; в dev без SDK — локальное время. */
+/** Серверное время Yandex SDK (`ysdk.serverTime()`); в dev без SDK — локальное время. */
 export function getServerTime(): number {
   try {
     return ysdk?.serverTime() ?? Date.now()

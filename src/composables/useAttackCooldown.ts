@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { PVP_ATTACK_COOLDOWN_MS } from '@/domain/constants'
 import { useGameStore } from '@/stores/gameStore'
 import { getServerTime } from '@/yandex/sdk'
+import { startServerTimeTicker } from '@/yandex/serverTimeTimers'
 
 function formatCooldown(ms: number): string {
   const totalSec = Math.ceil(ms / 1000)
@@ -15,17 +16,16 @@ export function useAttackCooldown() {
   const game = useGameStore()
   const now = ref(getServerTime())
 
-  let timer: ReturnType<typeof setInterval> | null = null
+  let stopTicker: (() => void) | null = null
 
   onMounted(() => {
-    now.value = getServerTime()
-    timer = window.setInterval(() => {
-      now.value = getServerTime()
-    }, 1000)
+    stopTicker = startServerTimeTicker((serverNow) => {
+      now.value = serverNow
+    })
   })
 
   onUnmounted(() => {
-    if (timer != null) window.clearInterval(timer)
+    stopTicker?.()
   })
 
   const remainingMs = computed(() =>

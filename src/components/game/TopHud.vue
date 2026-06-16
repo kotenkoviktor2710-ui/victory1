@@ -26,28 +26,31 @@ const coinDisplay = computed(() => formatNumber(game.coins))
   <header class="top-hud">
     <div class="top-hud__main">
       <div class="top-hud__left">
-        <button type="button" class="game-img-btn game-img-btn--hud" @click="emit('collection')">
+        <button
+          type="button"
+          class="game-hud-menu-btn game-hud-menu-btn--purple"
+          @click="emit('collection')"
+        >
+          <span class="game-hud-menu-btn__label game-text-stroke">Коллекция</span>
           <img
-            class="game-img-btn__img top-hud__hud-img top-hud__hud-img--full"
-            src="/images/collection-btn.png"
-            alt="Коллекция"
-          />
-          <img
-            class="game-img-btn__img top-hud__hud-img top-hud__hud-img--icon"
+            class="game-hud-menu-btn__icon"
             src="/images/collection-icon.png"
-            alt="Коллекция"
+            alt=""
+            aria-hidden="true"
           />
         </button>
-        <button type="button" class="game-img-btn game-img-btn--hud" @click="onFreeToys">
+        <button
+          type="button"
+          class="game-hud-menu-btn game-hud-menu-btn--gold"
+          aria-label="Бесплатный персонаж"
+          @click="onFreeToys"
+        >
+          <span class="game-hud-menu-btn__label game-text-stroke">Бесплатный персонаж</span>
           <img
-            class="game-img-btn__img top-hud__hud-img top-hud__hud-img--full"
-            src="/images/free-btn.png"
-            alt="Бесплатные игрушки"
-          />
-          <img
-            class="game-img-btn__img top-hud__hud-img top-hud__hud-img--icon"
+            class="game-hud-menu-btn__icon"
             src="/images/review-icon.png"
-            alt="Бесплатные игрушки"
+            alt=""
+            aria-hidden="true"
           />
         </button>
       </div>
@@ -133,9 +136,5 @@ const coinDisplay = computed(() => formatNumber(game.coins))
 
 .top-hud__combo-circle :deep(.combo-circle__label) {
   font-size: clamp(28px, 8vw, 44px);
-}
-
-.top-hud__hud-img--icon {
-  display: none;
 }
 </style>

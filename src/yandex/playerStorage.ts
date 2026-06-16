@@ -1,5 +1,5 @@
 import { getSdkPlayer } from '@/yandex/player'
-import { getYsdk } from '@/yandex/sdk'
+import { getServerTime, getYsdk } from '@/yandex/sdk'
 
 /** Ключ сохранения в облаке игрока — замените на свой. */
 export const DEFAULT_SAVE_KEY = 'merge_playtime_save'
@@ -72,7 +72,7 @@ async function flushPlayerData(forceFlush = false): Promise<void> {
   const player = await getSdkPlayer()
   if (!player?.setData) return
 
-  const now = Date.now()
+  const now = getServerTime()
   const shouldFlush = forceFlush || pendingFlush
   if (!shouldFlush && now - lastSetDataAt < SET_DATA_MIN_GAP_MS) {
     schedulePlayerWrite(true)
@@ -89,7 +89,7 @@ async function flushPlayerData(forceFlush = false): Promise<void> {
 
   try {
     await player.setData(toPlainRecord(playerBlob), shouldFlush)
-    lastSetDataAt = Date.now()
+    lastSetDataAt = getServerTime()
   } catch (err) {
     if (import.meta.env.DEV) console.warn('[playerStorage] setData failed', err)
   } finally {
