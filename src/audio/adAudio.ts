@@ -35,13 +35,19 @@ function onAudioResume(): void {
   }
 }
 
-/** Подписка на паузу/возобновление звука при рекламе (в т.ч. отсчёт перед interstitial). */
+function onVisibilityChange(): void {
+  if (document.hidden) onAudioPause()
+  else onAudioResume()
+}
+
+/** Подписка на паузу/возобновление звука при рекламе и смене вкладки. */
 export function bindAdAudioLifecycle(): void {
   if (bound || typeof window === 'undefined') return
   bound = true
 
   window.addEventListener('ads:audio-pause', onAudioPause)
   window.addEventListener('ads:audio-resume', onAudioResume)
+  document.addEventListener('visibilitychange', onVisibilityChange)
 }
 
 export function isAdAudioMuted(): boolean {
