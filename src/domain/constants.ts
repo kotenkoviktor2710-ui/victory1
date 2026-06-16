@@ -29,6 +29,12 @@ export const MAX_TEAM_SIZE = 5
 /** Кулдаун исходящего PvP-нападения (мс). */
 export const PVP_ATTACK_COOLDOWN_MS = 2 * 60 * 1000
 
+/** Интервал плановой полноэкранной рекламы в геймплее (мс). */
+export const SCHEDULED_AD_INTERVAL_MS = 2 * 60 * 1000
+
+/** Отсчёт в модалке перед показом плановой рекламы (сек). */
+export const AD_BREAK_COUNTDOWN_SEC = 3
+
 /** Просмотров rewarded-рекламы до бонусной награды. */
 export const AD_MILESTONE_VIEWS = 10
 

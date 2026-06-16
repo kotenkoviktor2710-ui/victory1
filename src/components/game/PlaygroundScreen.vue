@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import AdBreakModal from '@/components/game/AdBreakModal.vue'
 import AdMilestoneBar from '@/components/game/AdMilestoneBar.vue'
 import BottomActionBar from '@/components/game/BottomActionBar.vue'
 import CollectionModal from '@/components/game/CollectionModal.vue'
@@ -13,6 +14,7 @@ import SideShopPanel from '@/components/game/SideShopPanel.vue'
 import ToyAcquireModal from '@/components/game/ToyAcquireModal.vue'
 import TopHud from '@/components/game/TopHud.vue'
 import { useAdMilestone } from '@/composables/useAdMilestone'
+import { useScheduledAdBreak } from '@/composables/useScheduledAdBreak'
 import { useInboundAttack } from '@/composables/useInboundAttack'
 import { useAttackCooldown } from '@/composables/useAttackCooldown'
 import { usePvp } from '@/composables/usePvp'
@@ -40,6 +42,8 @@ const {
 const isBattleLoading = computed(() => pvp.isPreparingBattle.value)
 const inboundAttack = computed(() => inbound.pendingInbound.value)
 const isBattleActive = computed(() => battleSnapshot.value !== null)
+const scheduledAdActive = computed(() => !isBattleActive.value)
+const { countdown: adBreakCountdown } = useScheduledAdBreak(scheduledAdActive)
 
 function onRewardMilestone(fromRect: DOMRect): void {
   const granted = arenaRef.value?.grantAdMilestoneToysWithFlight(fromRect) ?? 0
@@ -172,6 +176,7 @@ onMounted(() => {
       @claim="onRewardClaimed"
     />
     <ToyAcquireModal />
+    <AdBreakModal v-if="adBreakCountdown !== null" :seconds-left="adBreakCountdown" />
   </div>
 </template>
 
