@@ -6,7 +6,7 @@ import {
   pauseAdAudio,
   resumeAdAudio,
   setAdBreakBlocking,
-  showInterstitialThen,
+  showInterstitialThenWithResult,
   showScheduledGameplayInterstitialThen,
 } from '@/ads/ads'
 import { AD_BREAK_COUNTDOWN_SEC, SCHEDULED_AD_INTERVAL_MS } from '@/domain/constants'
@@ -32,6 +32,7 @@ function dispatchGameplayResume(): void {
  */
 export function useScheduledAdBreak(active: Ref<boolean>) {
   const countdown = ref<number | null>(null)
+  const adUnavailable = ref(false)
 
   let nextBreakTimer: ServerTimerHandle | null = null
   let interstitialWaitTimer: ServerTimerHandle | null = null
@@ -80,22 +81,36 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     armNextBreak()
   }
 
+  function completeBreakCycle(): void {
+    resumeGameplayAfterCountdown()
+    finishBreakCycle()
+  }
+
   function runAdAfterCountdown(): void {
     clearCountdownTimer()
     countdown.value = null
     setAdBreakBlocking(false)
 
-    const onAdDone = (): void => {
-      resumeGameplayAfterCountdown()
-      finishBreakCycle()
+    const onAdDone = (shown: boolean): void => {
+      if (!shown) {
+        adUnavailable.value = true
+        return
+      }
+      completeBreakCycle()
     }
 
     if (import.meta.env.DEV) {
-      showInterstitialThen(onAdDone, 'scheduled_gameplay', { forceAttempt: true })
+      showInterstitialThenWithResult(onAdDone, 'scheduled_gameplay', { forceAttempt: true })
       return
     }
 
     showScheduledGameplayInterstitialThen(onAdDone)
+  }
+
+  function dismissAdUnavailable(): void {
+    if (!adUnavailable.value) return
+    adUnavailable.value = false
+    completeBreakCycle()
   }
 
   function scheduleWhenInterstitialReady(): void {
@@ -177,6 +192,11 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     startCountdown()
   }
 
+  function triggerNoAdModalTest(): void {
+    adUnavailable.value = true
+    pauseGameplayForCountdown()
+  }
+
   onMounted(() => {
     armNextBreak()
 
@@ -185,6 +205,7 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
 
     if (import.meta.env.DEV) {
       window.addEventListener('ads:break-test', triggerBreakTest)
+      window.addEventListener('ads:no-ad-modal-test', triggerNoAdModalTest)
     }
   })
 
@@ -193,6 +214,7 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     clearInterstitialWaitTimer()
     clearCountdownTimer()
     countdown.value = null
+    adUnavailable.value = false
     setAdBreakBlocking(false)
     resumeGameplayAfterCountdown()
 
@@ -201,8 +223,9 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
 
     if (import.meta.env.DEV) {
       window.removeEventListener('ads:break-test', triggerBreakTest)
+      window.removeEventListener('ads:no-ad-modal-test', triggerNoAdModalTest)
     }
   })
 
-  return { countdown }
+  return { countdown, adUnavailable, dismissAdUnavailable }
 }

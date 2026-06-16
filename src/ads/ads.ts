@@ -373,7 +373,7 @@ export function showRewardClaimInterstitialThen(
 }
 
 /** Плановая реклама в геймплее — через общий кулдаун, с ожиданием готовности. */
-export function showScheduledGameplayInterstitialThen(onDone: () => void): void {
+export function showScheduledGameplayInterstitialThen(onDone: (shown: boolean) => void): void {
   const attempt = (): void => {
     if (adPlaying.value) {
       window.addEventListener('ads:resume', attempt, { once: true })
@@ -386,13 +386,58 @@ export function showScheduledGameplayInterstitialThen(onDone: () => void): void 
       return
     }
 
-    showInterstitialThen(onDone, 'scheduled_gameplay', { scheduled: true })
+    showInterstitialThenWithResult(onDone, 'scheduled_gameplay', { scheduled: true })
   }
 
   attempt()
 }
 
+/** Interstitial с результатом: была ли реклама реально показана. */
+export function showInterstitialThenWithResult(
+  onDone: (shown: boolean) => void,
+  reason?: string,
+  options?: InterstitialOptions,
+): void {
+  const forceAttempt = options?.forceAttempt === true || options?.userInitiated === true
+  if (forceAttempt) {
+    showForcedInterstitialThenWithResult(onDone, reason)
+    return
+  }
+
+  const finish = (shown: boolean) => {
+    try {
+      onDone(shown)
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn('[ads] interstitial onDone failed', err)
+    }
+  }
+
+  if (adPlaying.value) {
+    window.addEventListener(
+      'ads:resume',
+      () => showInterstitialThenWithResult(onDone, reason, options),
+      { once: true },
+    )
+    return
+  }
+
+  if (!canShowInterstitial(options)) {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.info('[ads] interstitial skipped (cooldown)', reason)
+    }
+    finish(false)
+    return
+  }
+
+  invokeFullscreenInterstitialWithResult(onDone, reason)
+}
+
 function invokeFullscreenInterstitial(finish: () => void, reason?: string): void {
+  invokeFullscreenInterstitialWithResult(() => finish(), reason)
+}
+
+function invokeFullscreenInterstitialWithResult(onDone: (shown: boolean) => void, reason?: string): void {
   const ysdk = getYsdk()
   if (!ysdk) {
     if (import.meta.env.DEV) {
@@ -402,15 +447,115 @@ function invokeFullscreenInterstitial(finish: () => void, reason?: string): void
       window.setTimeout(() => {
         markInterstitialShown()
         emitResume()
-        finish()
+        onDone(true)
       }, 1200)
       return
     }
-    finish()
+    onDone(false)
     return
   }
 
-  showFullscreenAdvSafe(createFullscreenCallbacks(finish), finish)
+  showFullscreenAdvSafe(createFullscreenCallbacksWithResult(onDone), () => onDone(false))
+}
+
+function showForcedInterstitialThenWithResult(onDone: (shown: boolean) => void, reason?: string): void {
+  const finish = (shown: boolean) => {
+    try {
+      onDone(shown)
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn('[ads] forced interstitial onDone failed', err)
+    }
+  }
+
+  if (adPlaying.value) {
+    window.addEventListener(
+      'ads:resume',
+      () => showForcedInterstitialThenWithResult(onDone, reason),
+      { once: true },
+    )
+    return
+  }
+
+  let pauseEmitted = false
+  const pauseOnce = (): void => {
+    if (pauseEmitted) return
+    pauseEmitted = true
+    emitPause()
+  }
+  const resumeOnce = (): void => {
+    if (pauseEmitted) emitResume()
+  }
+  const done = (shown: boolean): void => {
+    resumeOnce()
+    finish(shown)
+  }
+
+  const ysdk = getYsdk()
+  if (!ysdk) {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.info('[ads] forced interstitial (dev stub)', reason)
+      pauseOnce()
+      window.setTimeout(() => {
+        done(true)
+      }, 1200)
+      return
+    }
+    finish(false)
+    return
+  }
+
+  pauseOnce()
+  showFullscreenAdvSafe(
+    {
+      onOpen: pauseOnce,
+      onClose: (wasShown = false) => done(wasShown),
+      onError: () => done(false),
+      onOffline: () => done(false),
+    },
+    () => done(false),
+  )
+}
+
+function createFullscreenCallbacksWithResult(onDone: (shown: boolean) => void) {
+  let pauseEmitted = false
+  let tracked = false
+
+  const trackShow = (): void => {
+    if (tracked) return
+    tracked = true
+    markInterstitialShown()
+  }
+
+  const pauseOnce = () => {
+    if (pauseEmitted) return
+    pauseEmitted = true
+    emitPause()
+  }
+  const resumeOnce = () => {
+    if (pauseEmitted) emitResume()
+  }
+  const finish = (shown: boolean) => {
+    resumeOnce()
+    try {
+      onDone(shown)
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn('[ads] interstitial onDone failed', err)
+    }
+  }
+
+  return {
+    onOpen: () => {
+      trackShow()
+      pauseOnce()
+    },
+    onClose: (wasShown = false) => {
+      if (wasShown) trackShow()
+      finish(wasShown)
+    },
+    onError: () => finish(false),
+    onOffline: () => finish(false),
+  }
 }
 
 function showFullscreenAdvSafe(callbacks: YsdkFullscreenCallbacks, onFail: () => void): void {
