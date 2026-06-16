@@ -5,11 +5,14 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
-import { gameplayPause, gameplayResume } from '@/yandex/sdk'
+import { adsPlaying } from '@/ads/ads'
+import { gameplayPause, gameplayResume, getGameplayPauseDepth } from '@/yandex/sdk'
+import { bindAdAudioLifecycle } from '@/audio/adAudio'
 import { bindProgressLifecycle } from '@/yandex/progressLifecycle'
 import { bindBrowserUiGuard } from '@/shared/utils/preventPullToRefresh'
 
 bindBrowserUiGuard()
+bindAdAudioLifecycle()
 
 const app = createApp(App)
 app.use(createPinia())
@@ -24,3 +27,10 @@ document.addEventListener('visibilitychange', () => {
 
 window.addEventListener('ads:pause', () => gameplayPause())
 window.addEventListener('ads:resume', () => gameplayResume())
+
+if (import.meta.env.DEV) {
+  Object.assign(window, {
+    __getGameplayPauseDepth: getGameplayPauseDepth,
+    __isAdsPlaying: () => adsPlaying(),
+  })
+}

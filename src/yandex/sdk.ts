@@ -177,6 +177,11 @@ export function gameplayResume(): void {
   syncGameplay()
 }
 
+/** Текущая глубина паузы (0 = геймплей активен). */
+export function getGameplayPauseDepth(): number {
+  return gameplayPauseDepth
+}
+
 let reviewRequested = false
 
 export async function checkCanReview(): Promise<boolean> {

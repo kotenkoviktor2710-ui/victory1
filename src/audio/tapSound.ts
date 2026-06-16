@@ -1,4 +1,5 @@
 import { assetUrl } from '@/shared/utils/assetUrl'
+import { isAdAudioMuted } from '@/audio/adAudio'
 import {
   getSharedAudioContext,
   unlockAudioOnUserGesture as unlockSharedAudioOnUserGesture,
@@ -56,6 +57,8 @@ export function preloadTapSound(): void {
 
 /** Короткий tap через Web Audio API (без HTMLAudioElement). */
 export function playToyTapSound(): void {
+  if (isAdAudioMuted()) return
+
   const ctx = getSharedAudioContext()
   if (!ctx) return
 

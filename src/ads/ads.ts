@@ -52,13 +52,25 @@ function clearAdWatchdog(): void {
   }
 }
 
+/** Пауза всего звука (ref-count: отсчёт + реклама). */
+export function pauseAdAudio(): void {
+  window.dispatchEvent(new CustomEvent('ads:audio-pause'))
+}
+
+/** Возобновление звука после парной pauseAdAudio(). */
+export function resumeAdAudio(): void {
+  window.dispatchEvent(new CustomEvent('ads:audio-resume'))
+}
+
 function emitPause() {
   adPlaying.value = true
+  pauseAdAudio()
   window.dispatchEvent(new CustomEvent('ads:pause'))
 }
 function emitResume() {
   adPlaying.value = false
   clearAdWatchdog()
+  resumeAdAudio()
   window.dispatchEvent(new CustomEvent('ads:resume'))
 }
 

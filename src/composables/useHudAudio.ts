@@ -1,10 +1,6 @@
 import { ref, watch } from 'vue'
 
-import {
-  pauseBackgroundMusic,
-  resumeBackgroundMusic,
-  setBackgroundMusicEnabled,
-} from '@/audio/bgMusic'
+import { setBackgroundMusicEnabled } from '@/audio/bgMusic'
 
 const soundOn = ref(true)
 const musicOn = ref(true)
@@ -22,13 +18,6 @@ function ensureAudioHooks(): void {
     },
     { immediate: true },
   )
-
-  window.addEventListener('ads:pause', pauseBackgroundMusic)
-  window.addEventListener('ads:resume', () => {
-    if (musicOn.value) {
-      resumeBackgroundMusic()
-    }
-  })
 }
 
 export function useHudAudio() {

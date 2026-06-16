@@ -2,11 +2,22 @@ import { onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
 
 import {
   adsPlaying,
+  msUntilInterstitialReady,
+  pauseAdAudio,
+  resumeAdAudio,
   setAdBreakBlocking,
+  showInterstitialThen,
   showScheduledGameplayInterstitialThen,
 } from '@/ads/ads'
 import { AD_BREAK_COUNTDOWN_SEC, SCHEDULED_AD_INTERVAL_MS } from '@/domain/constants'
-import { gameplayPause, gameplayResume } from '@/yandex/sdk'
+
+function dispatchGameplayPause(): void {
+  window.dispatchEvent(new CustomEvent('ads:pause'))
+}
+
+function dispatchGameplayResume(): void {
+  window.dispatchEvent(new CustomEvent('ads:resume'))
+}
 
 /**
  * Плановая реклама каждые 2 мин: блокирующая модалка с 3-секундным отсчётом, затем interstitial.
@@ -45,13 +56,15 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
   function pauseGameplayForCountdown(): void {
     if (gameplayPausedForCountdown) return
     gameplayPausedForCountdown = true
-    gameplayPause()
+    pauseAdAudio()
+    dispatchGameplayPause()
   }
 
   function resumeGameplayAfterCountdown(): void {
     if (!gameplayPausedForCountdown) return
     gameplayPausedForCountdown = false
-    gameplayResume()
+    resumeAdAudio()
+    dispatchGameplayResume()
   }
 
   function finishBreakCycle(): void {
@@ -63,10 +76,32 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     countdown.value = null
     setAdBreakBlocking(false)
 
-    showScheduledGameplayInterstitialThen(() => {
+    const onAdDone = (): void => {
       resumeGameplayAfterCountdown()
       finishBreakCycle()
-    })
+    }
+
+    if (import.meta.env.DEV) {
+      // Локально без SDK — сразу показываем stub, не ждём минутный кулдаун.
+      showInterstitialThen(onAdDone, 'scheduled_gameplay', { forceAttempt: true })
+      return
+    }
+
+    showScheduledGameplayInterstitialThen(onAdDone)
+  }
+
+  function scheduleWhenInterstitialReady(): void {
+    const wait = msUntilInterstitialReady({ scheduled: true })
+    if (wait > 0) {
+      clearNextBreakTimer()
+      nextBreakTimerId = window.setTimeout(() => {
+        nextBreakTimerId = null
+        scheduleWhenInterstitialReady()
+      }, wait)
+      return
+    }
+
+    startCountdown()
   }
 
   function startCountdown(): void {
@@ -98,7 +133,7 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
       return
     }
 
-    startCountdown()
+    scheduleWhenInterstitialReady()
   }
 
   function onVisibilityChange(): void {
@@ -119,6 +154,16 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     }
   })
 
+  function triggerBreakTest(): void {
+    if (countdown.value !== null) return
+    if (adsPlaying()) return
+    if (document.hidden || !active.value) {
+      pendingBreak = true
+      return
+    }
+    startCountdown()
+  }
+
   onMounted(() => {
     armNextBreak()
 
@@ -126,7 +171,7 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     window.addEventListener('ads:resume', onAdsResume)
 
     if (import.meta.env.DEV) {
-      window.addEventListener('ads:break-test', tryTriggerBreak)
+      window.addEventListener('ads:break-test', triggerBreakTest)
     }
   })
 
@@ -141,7 +186,7 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     window.removeEventListener('ads:resume', onAdsResume)
 
     if (import.meta.env.DEV) {
-      window.removeEventListener('ads:break-test', tryTriggerBreak)
+      window.removeEventListener('ads:break-test', triggerBreakTest)
     }
   })
 

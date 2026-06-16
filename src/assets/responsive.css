@@ -278,11 +278,12 @@
   }
 
   html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
-    right: auto;
-    left: calc(50% + var(--sword-text-half) + var(--sword-icon-gap));
-    width: var(--sword-icon-slot);
-    height: var(--sword-icon-slot);
-    transform: translateY(-50%);
+    right: -20px;
+    left: auto;
+    top: -19%;
+    width: clamp(54px, 13.5vw, 90px);
+    height: clamp(54px, 13.5vw, 90px);
+    transform: rotate(-190deg);
   }
 
   html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__sword {
@@ -329,11 +330,12 @@
   }
 
   html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
-    right: auto;
-    left: calc(50% + var(--sword-text-half) + var(--sword-icon-gap));
-    width: var(--sword-icon-slot);
-    height: var(--sword-icon-slot);
-    transform: translateY(-50%);
+    right: -14px;
+    left: auto;
+    top: -19%;
+    width: clamp(40px, 10vw, 54px);
+    height: clamp(40px, 10vw, 54px);
+    transform: rotate(-190deg);
   }
 
   html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--ad .game-attack-btn__icon {
@@ -646,9 +648,12 @@
   }
 
   html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
-    right: auto;
-    left: calc(50% + var(--sword-text-half) + var(--sword-icon-gap));
-    transform: translateY(-50%);
+    right: -20px;
+    left: auto;
+    top: -19%;
+    width: clamp(54px, 13.5vw, 90px);
+    height: clamp(54px, 13.5vw, 90px);
+    transform: rotate(-190deg);
   }
 
   html body .playground .game-attack-btn--cooldown .game-attack-btn__label {
