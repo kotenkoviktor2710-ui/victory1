@@ -843,6 +843,7 @@
     width: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
     min-width: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
     padding: 4px;
+    grid-template-columns: 1fr;
   }
 
   html body .playground .top-hud__audio .hud-audio__btn {

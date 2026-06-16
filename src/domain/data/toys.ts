@@ -236,7 +236,7 @@ export function getToyName(definitionId: string): string {
   return TOY_BY_ID[definitionId]?.name ?? 'Toy'
 }
 
-/** Уровень спрайта в каталоге: 1.png для первого персонажа, 2.png для второго и т.д. */
+/** Уровень спрайта в каталоге: 1.webp для первого персонажа, 2.webp для второго и т.д. */
 export function getToyPreviewLevel(definitionId: string): number {
   const index = TOY_CATALOG.findIndex((toy) => toy.id === definitionId)
   return index >= 0 ? index + 1 : 1

@@ -10,7 +10,7 @@ const BATTLE_TOY_SIZE = 'var(--game-battle-toy-size, clamp(120px, 22vmin, 210px)
 const VERTICAL_FIGHTER_LIMIT = 3
 /** sword.png: рукоять сверху, остриё снизу — выравниваем остриём по вектору полёта */
 const SWORD_FLIGHT_OFFSET_DEG = -90
-const battleBg = assetUrl('images/fight.png')
+const battleBg = assetUrl('images/fight.jpg')
 const battleSword = assetUrl('images/sword.png')
 
 const props = defineProps<{

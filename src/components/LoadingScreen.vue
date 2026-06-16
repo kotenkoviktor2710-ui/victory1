@@ -38,9 +38,9 @@ defineExpose({ setProgress, finish, waitUntilReady })
     <div class="loading-screen__stage">
       <div class="loading-screen__panel">
         <div class="loading-screen__hero" aria-hidden="true">
-          <img class="loading-screen__toy loading-screen__toy--left" src="/images/toys/7.png" alt="" />
-          <img class="loading-screen__toy loading-screen__toy--center" src="/images/toys/12.png" alt="" />
-          <img class="loading-screen__toy loading-screen__toy--right" src="/images/toys/25.png" alt="" />
+          <img class="loading-screen__toy loading-screen__toy--left" src="/images/toys/7.webp" alt="" />
+          <img class="loading-screen__toy loading-screen__toy--center" src="/images/toys/12.webp" alt="" />
+          <img class="loading-screen__toy loading-screen__toy--right" src="/images/toys/25.webp" alt="" />
         </div>
 
         <p class="loading-screen__label game-text-stroke">{{ t('loading.label') }}</p>
@@ -77,7 +77,7 @@ defineExpose({ setProgress, finish, waitUntilReady })
 .loading-screen__bg {
   position: absolute;
   inset: 0;
-  background: url('/images/bg.png') center center / cover no-repeat;
+  background: url('/images/bg.jpg') center center / cover no-repeat;
   pointer-events: none;
 }
 

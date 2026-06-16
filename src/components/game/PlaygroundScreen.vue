@@ -195,7 +195,7 @@ onMounted(() => {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: url('/images/bg.png') center center / cover no-repeat;
+  background: url('/images/bg.jpg') center center / cover no-repeat;
   pointer-events: none;
 }
 
