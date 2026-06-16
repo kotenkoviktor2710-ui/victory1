@@ -1,11 +1,11 @@
 import type { PlacedToy } from './types/toy'
 
-export const MAX_FIELD_TOYS = 16
+export const MAX_FIELD_TOYS = 24
 /** Отступы игровой зоны внутри арены (%). Верх — до кнопок HUD (они вне арены). */
 export const FIELD_INSET = { top: 0, right: 0, bottom: 0, left: 0 }
 
 /** Мин. отступ центра игрушки от края (%), чтобы спрайт и бейджи не обрезались. */
-export const FIELD_EDGE_MARGIN = 22
+export const FIELD_EDGE_MARGIN = 16
 
 export function clampFieldPosition(x: number, y: number): { x: number; y: number } {
   const edge = FIELD_EDGE_MARGIN

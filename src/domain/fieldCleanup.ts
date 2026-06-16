@@ -37,3 +37,32 @@ export function getRemovableToyIds(
     )
     .map((toy) => toy.instanceId)
 }
+
+export interface ReplacementPickOptions {
+  excludeInstanceIds?: string[]
+  /** Сначала заменяем игрушки вне боевой команды. */
+  protectInstanceIds?: string[]
+}
+
+/** Кого заменить при полном поле: сначала низкий уровень, затем не из команды PvP. */
+export function pickBoardToysForReplacement(
+  board: PlacedToy[],
+  count: number,
+  options: ReplacementPickOptions = {},
+): PlacedToy[] {
+  if (count <= 0 || board.length === 0) return []
+
+  const exclude = new Set(options.excludeInstanceIds ?? [])
+  const protect = new Set(options.protectInstanceIds ?? [])
+
+  return [...board]
+    .filter((toy) => !exclude.has(toy.instanceId))
+    .sort((a, b) => {
+      if (a.level !== b.level) return a.level - b.level
+      const aProtected = protect.has(a.instanceId) ? 1 : 0
+      const bProtected = protect.has(b.instanceId) ? 1 : 0
+      if (aProtected !== bProtected) return aProtected - bProtected
+      return a.instanceId.localeCompare(b.instanceId)
+    })
+    .slice(0, count)
+}

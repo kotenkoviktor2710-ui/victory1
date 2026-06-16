@@ -19,39 +19,42 @@ const emit = defineEmits<{
       <HudAudioControls />
     </div>
 
-    <div class="bottom-bar__actions" :class="{ 'bottom-bar__actions--cooldown-ad': showCooldownAd }">
-      <div class="bottom-bar__attack-wrap">
+    <div class="bottom-bar__actions">
+      <div
+        class="bottom-bar__attack-wrap"
+        :class="{ 'bottom-bar__attack-wrap--cooldown-ad': showCooldownAd }"
+      >
         <button
-          v-if="canAttack"
+          v-if="canAttack || cooldownLabel"
           type="button"
-          class="game-img-btn game-img-btn--attack bottom-bar__attack"
+          class="game-attack-btn bottom-bar__attack"
+          :class="{ 'game-attack-btn--cooldown': !canAttack }"
+          :disabled="!canAttack"
+          :aria-label="canAttack ? 'Напасть' : `Кулдаун нападения ${cooldownLabel}`"
+          :aria-live="canAttack ? undefined : 'polite'"
           @click="emit('attack')"
         >
-          <img class="game-img-btn__img" src="/images/attack-btn.png" alt="Напасть" />
+          <span class="game-attack-btn__label game-text-stroke">
+            {{ canAttack ? 'Напасть' : cooldownLabel }}
+          </span>
+          <span class="game-attack-btn__icon" aria-hidden="true">
+            <img class="game-attack-btn__sword" src="/images/sword.png" alt="" />
+          </span>
         </button>
 
-        <div
-          v-else-if="cooldownLabel"
-          class="bottom-bar__cooldown-btn"
-          role="status"
-          aria-live="polite"
-          :aria-label="`Кулдаун нападения ${cooldownLabel}`"
+        <button
+          v-if="showCooldownAd"
+          type="button"
+          class="game-attack-btn game-attack-btn--ad bottom-bar__ad-btn"
+          aria-label="Не ждать — сбросить ожидание за просмотр рекламы"
+          @click="emit('skip-cooldown')"
         >
-          <span class="bottom-bar__cooldown-title game-text-stroke">Напасть</span>
-          <span class="bottom-bar__cooldown game-text-stroke">{{ cooldownLabel }}</span>
-        </div>
+          <span class="game-attack-btn__label game-text-stroke">НЕ ЖДАТЬ!</span>
+          <span class="game-attack-btn__icon" aria-hidden="true">
+            <img class="game-attack-btn__ad-icon" src="/images/ads.png" alt="" />
+          </span>
+        </button>
       </div>
-
-      <button
-        v-if="showCooldownAd"
-        type="button"
-        class="bottom-bar__ad-btn"
-        aria-label="Не ждать — сбросить ожидание за просмотр рекламы"
-        @click="emit('skip-cooldown')"
-      >
-        <span class="bottom-bar__ad-btn-text game-text-stroke">не ждать!</span>
-        <img class="bottom-bar__ad-btn-icon" src="/images/ads.png" alt="" aria-hidden="true" />
-      </button>
     </div>
 
     <div class="bottom-bar__spacer" aria-hidden="true" />
@@ -64,13 +67,23 @@ const emit = defineEmits<{
   z-index: 10;
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
-  grid-template-rows: minmax(var(--bottom-bar-row-height, clamp(56px, 15vw, 72px)), auto);
+  grid-template-rows: 1fr;
   align-items: center;
   gap: 6px;
   min-height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
-  padding: 8px 12px;
+  padding: 0 12px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.bottom-bar__actions,
+.bottom-bar__attack-wrap {
+  overflow: visible;
+}
+
+.game-attack-btn__label {
+  text-transform: uppercase;
+  font-weight: 900;
 }
 
 .bottom-bar__left {
@@ -81,6 +94,7 @@ const emit = defineEmits<{
   gap: 12px;
   justify-content: flex-start;
   justify-self: start;
+  align-self: center;
   flex-shrink: 0;
   min-width: 0;
   --game-hud-audio-icon-size: var(--game-bottom-icon-size, 34px);
@@ -91,6 +105,7 @@ const emit = defineEmits<{
   grid-column: 3;
   grid-row: 1;
   min-width: 0;
+  align-self: center;
 }
 
 .bottom-bar__actions {
@@ -99,125 +114,52 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(6px, 1.6vw, 10px);
   justify-self: center;
+  align-self: center;
   width: auto;
   max-width: 100%;
   min-width: 0;
   flex-shrink: 0;
   z-index: 1;
   --bottom-action-btn-width: var(--game-attack-btn-width, clamp(188px, 50vw, 260px));
-}
-
-.bottom-bar__actions--cooldown-ad {
-  gap: clamp(6px, 1.6vw, 10px);
+  --game-attack-btn-height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
 }
 
 .bottom-bar__attack-wrap {
   position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(6px, 1.6vw, 10px);
   flex: 0 0 auto;
   width: auto;
   min-width: 0;
   max-width: 100%;
+}
+
+.bottom-bar__attack-wrap--cooldown-ad {
+  gap: clamp(6px, 1.6vw, 10px);
+}
+
+.bottom-bar__attack,
+.bottom-bar__ad-btn {
+  flex: 0 0 auto;
+  height: var(--game-attack-btn-height);
+  min-height: var(--game-attack-btn-height);
+  max-height: var(--game-attack-btn-height);
 }
 
 .bottom-bar__attack {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-}
-
-.bottom-bar__attack :deep(.game-img-btn) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.bottom-bar__attack :deep(.game-img-btn__img) {
-  display: block;
   width: var(--bottom-action-btn-width);
-  max-width: none;
-  max-height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
-  height: auto;
-  object-fit: contain;
-}
-
-.bottom-bar__cooldown-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(4px, 1.2vw, 8px);
-  flex: 0 0 auto;
-  width: var(--bottom-action-btn-width);
-  max-width: 100%;
-  height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
-  min-height: 0;
-  padding: 0 clamp(6px, 1.6vw, 10px);
-  box-sizing: border-box;
-  border: 3px solid #3d0a0a;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #a32828 0%, #7d1818 45%, #5a1010 100%);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -4px 0 rgba(0, 0, 0, 0.24),
-    2px 3px 0 rgba(0, 0, 0, 0.42);
-  opacity: 0.72;
-  pointer-events: none;
-}
-
-.bottom-bar__cooldown-title {
-  font-size: clamp(22px, 5.8vw, 32px);
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .bottom-bar__ad-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(3px, 1vw, 6px);
-  flex: 0 0 auto;
-  width: var(--bottom-action-btn-width);
-  max-width: 100%;
-  min-width: 0;
-  height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
-  padding: 0 clamp(6px, 1.6vw, 10px);
-  box-sizing: border-box;
-  border: 2.5px solid var(--game-blue-deep);
-  border-radius: 6px;
-  background: var(--game-panel-texture) center center / cover no-repeat;
-  box-shadow: var(--game-shadow-inset), var(--game-shadow);
-  cursor: pointer;
-  transition: transform 0.1s ease, opacity 0.15s ease;
-}
-
-.bottom-bar__ad-btn:active {
-  transform: scale(0.96);
-}
-
-.bottom-bar__ad-btn-text {
-  font-size: clamp(20px, 5.4vw, 30px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bottom-bar__ad-btn-icon {
-  flex-shrink: 0;
-  width: clamp(26px, 7vw, 36px);
-  height: clamp(26px, 7vw, 36px);
-  object-fit: contain;
-  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.4));
-  pointer-events: none;
-}
-
-.bottom-bar__cooldown {
-  font-size: clamp(18px, 4.8vw, 26px);
-  line-height: 1;
-  color: #fff;
-  white-space: nowrap;
+  width: auto;
+  min-width: clamp(132px, 20vw, 168px);
+  max-width: var(--bottom-action-btn-width);
 }
 </style>

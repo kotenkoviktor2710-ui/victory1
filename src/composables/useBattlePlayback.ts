@@ -8,6 +8,8 @@ export interface BattleDamageFloat {
   unitId: string
   amount: number
   isCrit: boolean
+  xPercent: number
+  yPercent: number
 }
 
 export interface BattleHitWord {
@@ -15,6 +17,8 @@ export interface BattleHitWord {
   unitId: string
   word: string
   isCrit: boolean
+  xPercent: number
+  yPercent: number
 }
 
 export interface BattleProjectile {
@@ -27,7 +31,6 @@ export interface BattleProjectile {
 const WINDUP_MS = 360
 const FLIGHT_MS = 560
 const IMPACT_MS = 420
-const TEAM_MEMBER_GAP_MS = 140
 const WAVE_COOLDOWN_MS = 320
 const FINISH_PAUSE_MS = 900
 
@@ -66,6 +69,17 @@ function getWaveCooldown(waveCount: number): number {
   return WAVE_COOLDOWN_MS
 }
 
+function randomFxPosition(): { xPercent: number; yPercent: number } {
+  const angle = Math.random() * Math.PI * 2
+  const radiusX = 18 + Math.random() * 34
+  const radiusY = 14 + Math.random() * 30
+
+  return {
+    xPercent: Math.min(92, Math.max(8, 50 + Math.cos(angle) * radiusX)),
+    yPercent: Math.min(88, Math.max(6, 50 + Math.sin(angle) * radiusY)),
+  }
+}
+
 export function useBattlePlayback(snapshot: BattleSnapshot) {
   const unitHealth = ref(
     cloneUnitHealth([...snapshot.playerUnits, ...snapshot.enemyUnits]),
@@ -95,11 +109,14 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
   function spawnDamageFloat(action: BattleAction): void {
     floatId += 1
     const id = floatId
+    const { xPercent, yPercent } = randomFxPosition()
     damageFloats.value.push({
       id,
       unitId: action.targetId,
       amount: action.damage,
       isCrit: action.isCrit,
+      xPercent,
+      yPercent,
     })
     window.setTimeout(() => {
       damageFloats.value = damageFloats.value.filter((entry) => entry.id !== id)
@@ -109,46 +126,18 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
   function spawnHitWord(action: BattleAction): void {
     hitWordId += 1
     const id = hitWordId
+    const { xPercent, yPercent } = randomFxPosition()
     hitWords.value.push({
       id,
       unitId: action.targetId,
       word: pickBattleHitWord(),
       isCrit: action.isCrit,
+      xPercent,
+      yPercent,
     })
     window.setTimeout(() => {
       hitWords.value = hitWords.value.filter((entry) => entry.id !== id)
     }, 900)
-  }
-
-  async function playSingleAction(action: BattleAction): Promise<void> {
-    if (cancelled) return
-    if (!isAlive(action.attackerId) || !isAlive(action.targetId)) return
-
-    activeAttackerIds.value = [action.attackerId]
-    activeTargetIds.value = [action.targetId]
-    await delay(WINDUP_MS)
-    if (cancelled) return
-
-    projectileId += 1
-    flyingProjectiles.value = [{
-      id: projectileId,
-      attackerId: action.attackerId,
-      targetId: action.targetId,
-      isCrit: action.isCrit,
-    }]
-    await delay(FLIGHT_MS)
-    if (cancelled) return
-
-    flyingProjectiles.value = []
-    applyAction(action)
-    spawnDamageFloat(action)
-    spawnHitWord(action)
-    hitTargetIds.value = [action.targetId]
-    await delay(IMPACT_MS)
-
-    activeAttackerIds.value = []
-    activeTargetIds.value = []
-    hitTargetIds.value = []
   }
 
   async function playWave(actions: BattleAction[], cooldownMs: number): Promise<void> {
@@ -159,13 +148,36 @@ export function useBattlePlayback(snapshot: BattleSnapshot) {
     )
     if (valid.length === 0) return
 
-    for (let index = 0; index < valid.length; index += 1) {
-      await playSingleAction(valid[index]!)
-      if (cancelled) return
-      if (index < valid.length - 1) {
-        await delay(TEAM_MEMBER_GAP_MS)
+    activeAttackerIds.value = valid.map((action) => action.attackerId)
+    activeTargetIds.value = valid.map((action) => action.targetId)
+    await delay(WINDUP_MS)
+    if (cancelled) return
+
+    const projectiles: BattleProjectile[] = valid.map((action) => {
+      projectileId += 1
+      return {
+        id: projectileId,
+        attackerId: action.attackerId,
+        targetId: action.targetId,
+        isCrit: action.isCrit,
       }
+    })
+    flyingProjectiles.value = projectiles
+    await delay(FLIGHT_MS)
+    if (cancelled) return
+
+    flyingProjectiles.value = []
+    for (const action of valid) {
+      applyAction(action)
+      spawnDamageFloat(action)
+      spawnHitWord(action)
     }
+    hitTargetIds.value = valid.map((action) => action.targetId)
+    await delay(IMPACT_MS)
+
+    activeAttackerIds.value = []
+    activeTargetIds.value = []
+    hitTargetIds.value = []
 
     await delay(cooldownMs)
   }

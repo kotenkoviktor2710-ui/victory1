@@ -85,7 +85,7 @@ const coinDisplay = computed(() => formatNumber(game.coins))
 .top-hud__main {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: start;
   gap: 8px;
 }
 
@@ -100,7 +100,7 @@ const coinDisplay = computed(() => formatNumber(game.coins))
 .top-hud__center {
   display: flex;
   justify-content: center;
-  align-self: center;
+  align-self: start;
   min-width: 0;
 }
 
@@ -109,6 +109,7 @@ const coinDisplay = computed(() => formatNumber(game.coins))
   align-items: center;
   justify-content: flex-end;
   justify-self: end;
+  align-self: start;
   gap: clamp(6px, 1.6vw, 10px);
   width: var(--game-coin-banner-width, clamp(172px, 46vw, 240px));
   min-width: 0;

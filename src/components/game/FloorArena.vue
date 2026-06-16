@@ -6,7 +6,9 @@ import type { PlacedToy } from '@/domain/types/toy'
 import { getToyImageByLevel } from '@/domain/data/toyImages'
 import { formatNumber } from '@/domain/formulas/economy'
 import { COMBO_LEVEL_COLORS } from '@/domain/types/game'
+import { playToyTapSound, unlockAudioOnUserGesture } from '@/audio/tapSound'
 import { useClicker } from '@/composables/useClicker'
+import { useHudAudio } from '@/composables/useHudAudio'
 import { useMergeDrag } from '@/composables/useMergeDrag'
 import { usePurchaseFlight } from '@/composables/usePurchaseFlight'
 import { useGameStore } from '@/stores/gameStore'
@@ -16,6 +18,7 @@ import ToySprite from '@/components/game/ToySprite.vue'
 
 const game = useGameStore()
 const { floatingCoins } = useClicker()
+const { soundOn } = useHudAudio()
 
 const TAP_BURST_MS = 520
 const TAP_REACT_MS = 480
@@ -108,6 +111,7 @@ function bindToyRef(el: Element | ComponentPublicInstance | null, instanceId: st
 }
 
 function onToyPointerDown(toy: (typeof game.board)[number], event: PointerEvent): void {
+  unlockAudioOnUserGesture()
   onPointerDown(toy.instanceId, event, getToyImageByLevel(toy.level), toy.level)
 }
 
@@ -122,6 +126,9 @@ function onToyPointerUp(toy: (typeof game.board)[number], event: PointerEvent): 
     return
   }
   game.registerToyClick(toy.instanceId, event.clientX, event.clientY)
+  if (soundOn.value) {
+    playToyTapSound()
+  }
   triggerToyTapReact(toy.instanceId)
   spawnTapBurst(event.clientX, event.clientY)
   event.stopPropagation()

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import GameModal from '@/components/game/GameModal.vue'
+import { formatNumber } from '@/domain/formulas/economy'
 import type { InboundAttack } from '@/domain/pvp/types'
 
 defineProps<{
@@ -12,76 +14,70 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="inbound-attack-overlay">
-    <div class="inbound-attack">
-      <p class="inbound-attack__label game-text-stroke">На вас напал игрок:</p>
-      <p class="inbound-attack__name">{{ attack.attackerName }}</p>
-
-      <div class="inbound-attack__actions">
-        <button
-          type="button"
-          class="game-sketch-btn game-sketch-btn--green inbound-attack__btn game-text-stroke"
-          @click="emit('accept')"
-        >
-          В БОЙ!
-        </button>
-        <button
-          type="button"
-          class="game-sketch-btn game-sketch-btn--red inbound-attack__btn game-text-stroke"
-          @click="emit('flee')"
-        >
-          Убежать
-        </button>
-      </div>
+  <GameModal title="На вас напал игрок:" @close="emit('flee')">
+    <div class="inbound-attack__hero">
+      <img
+        v-if="attack.attackerAvatar"
+        class="inbound-attack__avatar"
+        :src="attack.attackerAvatar"
+        alt=""
+        aria-hidden="true"
+      />
+      <p class="inbound-attack__name game-text-stroke">{{ attack.attackerName }}</p>
+      <p class="inbound-attack__meta game-text-stroke">
+        Сила {{ formatNumber(attack.power) }}
+      </p>
     </div>
-  </div>
+
+    <div class="game-modal-picker__actions">
+      <button
+        type="button"
+        class="game-sketch-btn game-sketch-btn--green game-modal-picker__action game-text-stroke"
+        @click="emit('accept')"
+      >
+        В БОЙ!
+      </button>
+      <button
+        type="button"
+        class="game-sketch-btn game-sketch-btn--red game-modal-picker__action game-text-stroke"
+        @click="emit('flee')"
+      >
+        Убежать
+      </button>
+    </div>
+  </GameModal>
 </template>
 
 <style scoped>
-.inbound-attack-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
+.inbound-attack__hero {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.62);
-}
-
-.inbound-attack {
-  width: min(520px, 100%);
-  padding: 28px 24px 22px;
+  gap: 10px;
+  margin-bottom: 18px;
   text-align: center;
-  background: #0b0b0b;
-  border-radius: 4px;
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.08),
-    0 18px 40px rgba(0, 0, 0, 0.55);
 }
 
-.inbound-attack__label {
-  margin: 0 0 10px;
-  font-size: clamp(1.1rem, 3vw, 1.35rem);
-  color: #fff;
+.inbound-attack__avatar {
+  width: clamp(56px, 14vw, 72px);
+  height: clamp(56px, 14vw, 72px);
+  border: 3px solid var(--game-blue-border);
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: var(--game-shadow);
 }
 
 .inbound-attack__name {
-  margin: 0 0 24px;
-  font-size: clamp(1.5rem, 4.5vw, 2rem);
-  font-weight: 900;
-  color: #ff4f8b;
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+  margin: 0;
+  font-size: clamp(28px, 7vw, 40px);
+  line-height: 1.05;
+  color: #ff5f9a;
+  letter-spacing: 0.02em;
 }
 
-.inbound-attack__actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.inbound-attack__btn {
-  min-height: 54px;
-  font-size: clamp(1rem, 2.8vw, 1.2rem);
+.inbound-attack__meta {
+  margin: 0;
+  font-size: clamp(16px, 4vw, 22px);
+  color: #ffe566;
 }
 </style>

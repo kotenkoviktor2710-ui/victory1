@@ -155,6 +155,147 @@
   width: var(--game-attack-btn-width, clamp(168px, 46vw, 232px));
 }
 
+.game-attack-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--game-attack-btn-width, clamp(168px, 46vw, 232px));
+  min-width: clamp(92px, 22vw, 132px);
+  max-width: 100%;
+  height: var(--game-attack-btn-height, clamp(48px, 13vw, 64px));
+  max-height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
+  padding: 0 clamp(8px, 2vw, 12px);
+  box-sizing: border-box;
+  border: 2px solid #1a1208;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #a82828 0%, #7a1515 48%, #651010 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.38),
+    2px 3px 0 rgba(0, 0, 0, 0.38);
+  overflow: visible;
+  font-family: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.game-attack-btn:active:not(:disabled) {
+  transform: scale(0.96) translateY(1px);
+}
+
+.game-attack-btn:disabled {
+  cursor: default;
+}
+
+.game-attack-btn__label {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-inline: clamp(30px, 7.5vw, 42px);
+  text-align: center;
+  font-size: clamp(18px, 4.8vw, 26px);
+  font-weight: 900;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+.game-attack-btn--cooldown .game-attack-btn__label {
+  font-size: clamp(20px, 5.4vw, 30px);
+  letter-spacing: 0.06em;
+  padding-inline: clamp(34px, 8.5vw, 46px);
+}
+
+.game-attack-btn--cooldown:not(.game-attack-btn--ad) {
+  background: linear-gradient(
+    180deg,
+    rgb(168 40 40 / 0.55) 0%,
+    rgb(122 21 21 / 0.55) 48%,
+    rgb(101 16 16 / 0.55) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    inset 0 -2px 0 rgb(0 0 0 / 0.22),
+    2px 3px 0 rgb(0 0 0 / 0.22);
+}
+
+.game-attack-btn--cooldown:not(.game-attack-btn--ad) .game-attack-btn__icon {
+  opacity: 0.55;
+}
+
+.game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__label {
+  padding-inline: clamp(34px, 8.5vw, 46px);
+}
+
+.game-attack-btn__icon {
+  position: absolute;
+  right: clamp(6px, 1.6vw, 10px);
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(34px, 8.5vw, 48px);
+  height: clamp(34px, 8.5vw, 48px);
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
+  right: clamp(2px, 0.6vw, 6px);
+  width: clamp(54px, 13.5vw, 74px);
+  height: clamp(54px, 13.5vw, 74px);
+}
+
+.game-attack-btn__sword {
+  display: block;
+  width: 118%;
+  height: 118%;
+  object-fit: contain;
+  transform: rotate(28deg);
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.45));
+  pointer-events: none;
+  user-select: none;
+}
+
+.game-attack-btn--ad {
+  background: linear-gradient(180deg, #5eb8f0 0%, #2d8fd4 48%, #1a6fad 100%);
+  --ad-icon-slot: clamp(34px, 8.5vw, 44px);
+  --ad-icon-gap: clamp(10px, 2.5vw, 14px);
+}
+
+.game-attack-btn--ad .game-attack-btn__label {
+  font-size: clamp(14px, 3.6vw, 20px);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding-left: clamp(12px, 3vw, 16px);
+  padding-right: calc(var(--ad-icon-slot) + var(--ad-icon-gap));
+}
+
+.game-attack-btn--ad .game-attack-btn__icon {
+  right: clamp(6px, 1.5vw, 10px);
+  width: var(--ad-icon-slot);
+  height: clamp(30px, 7.5vw, 40px);
+}
+
+.game-attack-btn__ad-icon {
+  display: block;
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  transform: rotate(8deg);
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+  user-select: none;
+}
+
 .game-toy-outline {
   filter:
     drop-shadow(0 0 2px #fff)

@@ -8,11 +8,12 @@
   :root {
     --game-hud-btn-width: clamp(130px, 34vw, 210px);
     --game-coin-banner-width: clamp(130px, 34vw, 210px);
-    --game-side-card-width: clamp(128px, 30vw, 200px);
+    --game-side-card-width: clamp(118px, 28vw, 168px);
+    --game-side-card-stage-height: clamp(100px, 26vw, 140px);
     --game-attack-btn-width: clamp(148px, 42vw, 210px);
     --game-combo-bar-width: min(440px, 86vw);
     --game-field-toy-size: clamp(120px, 32vw, 190px);
-    --game-side-toy-size: clamp(72px, 20vw, 150px);
+    --game-side-toy-size: clamp(142px, 36vw, 190px);
     --game-battle-toy-size: clamp(100px, 19vmin, 175px);
     --game-battle-hp-width: clamp(62px, 10vmin, 92px);
     --game-battle-hp-height: clamp(6px, 1.4vmin, 9px);
@@ -23,7 +24,7 @@
   html body .playground .playground__stage {
     flex-direction: column;
     align-items: stretch;
-    overflow: hidden;
+    overflow: visible;
   }
 
   html body .playground .floor-arena {
@@ -34,11 +35,90 @@
 
   html body .playground .side-shop {
     flex-direction: row;
-    justify-content: center;
+    justify-content: stretch;
+    align-items: flex-end;
     align-self: stretch;
     flex-shrink: 0;
-    gap: 12px;
-    padding: 4px 10px 8px;
+    gap: 8px;
+    padding: 2px 8px 0;
+    width: 100%;
+    overflow: visible;
+  }
+
+  html body .playground .side-shop .game-side-card {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    overflow: visible;
+  }
+
+  html body .playground .game-side-card__frame {
+    padding: clamp(3px, 0.9vw, 5px);
+    overflow: visible;
+    width: 100%;
+  }
+
+  html body .playground .game-side-card__stage {
+    aspect-ratio: auto;
+    width: 100%;
+    height: var(--game-side-card-stage-height);
+    min-height: var(--game-side-card-stage-height);
+    max-height: var(--game-side-card-stage-height);
+    overflow: visible;
+    padding-bottom: clamp(30px, 7.5vw, 38px);
+  }
+
+  html body .playground .game-side-card__toy {
+    overflow: visible;
+  }
+
+  html body .playground .game-side-card__ribbon {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
+    justify-content: center;
+    min-height: clamp(30px, 7.5vw, 38px);
+    padding: 4px 10px;
+    gap: 6px;
+    clip-path: none;
+  }
+
+  html body .playground .game-side-card__ribbon--shop {
+    clip-path: none;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  html body .playground .game-side-card__ribbon--ad {
+    clip-path: none;
+    justify-content: center;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  html body .playground .game-side-card__ribbon-text {
+    font-size: clamp(17px, 4.4vw, 23px);
+  }
+
+  html body .playground .game-side-card__ribbon-icon {
+    width: clamp(22px, 5.6vw, 30px);
+    height: clamp(22px, 5.6vw, 30px);
+  }
+
+  html body .playground .game-side-card__toy .toy-sprite__img {
+    width: var(--game-side-toy-size);
+    height: var(--game-side-toy-size);
+    max-width: none;
+    margin: clamp(-34px, -8.5vw, -20px) clamp(-14px, -3.5vw, -8px)
+      clamp(-4px, -1vw, -2px) clamp(-14px, -3.5vw, -8px);
+  }
+
+  html body .playground .playground__footer {
+    --playground-footer-pad-y: 2px;
   }
 }
 
@@ -139,80 +219,127 @@
   html body .playground .bottom-bar {
     --bottom-bar-row-height: clamp(52px, 14vw, 64px);
     gap: 6px;
-    padding: 8px;
+    padding: 0 8px;
     min-height: var(--bottom-bar-row-height);
   }
 
-  html body .playground .bottom-bar__attack .game-img-btn__img {
+  html body .playground .bottom-bar__attack {
+    width: var(--bottom-action-btn-width, var(--game-attack-btn-width));
+    max-width: 100%;
+    height: var(--bottom-bar-row-height);
     max-height: var(--bottom-bar-row-height);
   }
 
-  html body .playground .bottom-bar__cooldown-btn {
-    height: var(--bottom-bar-row-height);
-    min-height: 0;
-    gap: 6px;
-    padding: 0 8px;
-  }
-
   html body .playground .bottom-bar__ad-btn {
-    gap: 4px;
     height: var(--bottom-bar-row-height);
-    padding: 0 6px;
+    min-height: var(--bottom-bar-row-height);
+    max-height: var(--bottom-bar-row-height);
   }
 
   html body .playground .bottom-bar__actions {
     gap: 8px;
   }
 
-  html body .playground .bottom-bar__attack .game-img-btn__img {
+  html body .playground .bottom-bar__attack {
     width: var(--bottom-action-btn-width, var(--game-attack-btn-width));
     max-width: 100%;
+    height: var(--bottom-bar-row-height);
+    max-height: var(--bottom-bar-row-height);
   }
 
-  html body .playground .bottom-bar__cooldown-title {
-    font-size: clamp(16px, 4.4vw, 22px);
-  }
-
-  html body .playground .bottom-bar__cooldown {
+  html body .playground .game-attack-btn--cooldown .game-attack-btn__label {
     font-size: clamp(14px, 3.8vw, 18px);
   }
 
-  html body .playground .bottom-bar__ad-btn-text {
+  html body .playground .game-attack-btn--ad .game-attack-btn__label {
     font-size: clamp(14px, 4vw, 20px);
   }
 
-  html body .playground .bottom-bar__ad-btn-icon {
-    width: clamp(22px, 6vw, 28px);
-    height: clamp(22px, 6vw, 28px);
+  html body .playground .bottom-bar__attack-wrap:not(.bottom-bar__attack-wrap--cooldown-ad) {
+    width: 100%;
+    max-width: 100%;
   }
 
-  html body .playground .bottom-bar__actions--cooldown-ad {
+  html body .playground .bottom-bar__attack-wrap:not(.bottom-bar__attack-wrap--cooldown-ad) .bottom-bar__attack {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  html body .playground .game-attack-btn:not(.game-attack-btn--ad) {
+    --sword-icon-slot: clamp(42px, 11vw, 56px);
+    --sword-icon-gap: clamp(8px, 2vw, 10px);
+    --sword-text-half: clamp(34px, 8.5vw, 46px);
+  }
+
+  html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__label {
+    padding-left: clamp(14px, 3.5vw, 20px);
+    padding-right: clamp(14px, 3.5vw, 20px);
+  }
+
+  html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
+    right: auto;
+    left: calc(50% + var(--sword-text-half) + var(--sword-icon-gap));
+    width: var(--sword-icon-slot);
+    height: var(--sword-icon-slot);
+    transform: translateY(-50%);
+  }
+
+  html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__sword {
+    width: 110%;
+    height: 110%;
+  }
+
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad {
     gap: 4px;
+    width: 100%;
+    max-width: 100%;
   }
 
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__attack-wrap,
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown-btn,
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn {
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .bottom-bar__attack,
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .bottom-bar__ad-btn {
     flex: 1 1 0;
     width: auto;
     min-width: 0;
+    max-width: none;
   }
 
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown-title {
-    font-size: clamp(12px, 3.2vw, 15px);
-  }
-
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown {
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--cooldown .game-attack-btn__label {
     font-size: clamp(11px, 3vw, 14px);
+    padding-left: clamp(8px, 2.2vw, 12px);
+    padding-right: clamp(8px, 2.2vw, 12px);
   }
 
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn-text {
-    font-size: clamp(11px, 3vw, 14px);
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn:not(.game-attack-btn--ad) {
+    --sword-icon-slot: clamp(34px, 8.5vw, 42px);
+    --sword-icon-gap: clamp(6px, 1.6vw, 8px);
+    --sword-text-half: clamp(18px, 4.5vw, 24px);
   }
 
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn-icon {
-    width: clamp(16px, 4.5vw, 20px);
-    height: clamp(16px, 4.5vw, 20px);
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--ad .game-attack-btn__label {
+    font-size: clamp(10px, 2.8vw, 13px);
+    letter-spacing: 0.01em;
+    padding-left: clamp(8px, 2.2vw, 12px);
+    padding-right: calc(var(--ad-icon-slot, 28px) + var(--ad-icon-gap, 8px));
+  }
+
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--ad {
+    --ad-icon-slot: clamp(26px, 6.5vw, 32px);
+    --ad-icon-gap: clamp(8px, 2vw, 10px);
+  }
+
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
+    right: auto;
+    left: calc(50% + var(--sword-text-half) + var(--sword-icon-gap));
+    width: var(--sword-icon-slot);
+    height: var(--sword-icon-slot);
+    transform: translateY(-50%);
+  }
+
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--ad .game-attack-btn__icon {
+    width: var(--ad-icon-slot);
+    height: clamp(24px, 6vw, 30px);
+    right: clamp(4px, 1.2vw, 8px);
   }
 }
 
@@ -231,46 +358,32 @@
   html body .playground .bottom-bar {
     --bottom-bar-row-height: clamp(48px, 12vw, 58px);
     gap: 6px;
-    padding: 8px;
+    padding: 0 8px;
     min-height: var(--bottom-bar-row-height);
   }
 
-  html body .playground .bottom-bar__attack .game-img-btn__img {
+  html body .playground .bottom-bar__attack {
     max-height: var(--bottom-bar-row-height);
+    height: var(--bottom-bar-row-height);
   }
 
-  html body .playground .bottom-bar__actions--cooldown-ad {
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad {
     gap: 4px;
   }
 
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown-title {
-    font-size: clamp(11px, 2.8vw, 14px);
-  }
-
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn-text {
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--ad .game-attack-btn__label {
     font-size: clamp(10px, 2.6vw, 13px);
   }
 
-  html body .playground .bottom-bar__cooldown-btn {
+  html body .playground .bottom-bar__attack,
+  html body .playground .bottom-bar__ad-btn {
     height: var(--bottom-bar-row-height);
-    min-height: 0;
-    gap: 6px;
-    padding: 0 8px;
+    min-height: var(--bottom-bar-row-height);
+    max-height: var(--bottom-bar-row-height);
   }
 
   html body .playground .bottom-bar__actions {
     gap: 8px;
-  }
-
-  html body .playground .bottom-bar__ad-btn {
-    gap: 4px;
-    height: var(--bottom-bar-row-height);
-    padding: 0 8px;
-  }
-
-  html body .playground .bottom-bar__ad-btn-icon {
-    width: clamp(20px, 5.5vw, 26px);
-    height: clamp(20px, 5.5vw, 26px);
   }
 }
 
@@ -293,12 +406,13 @@
   html body .playground .bottom-bar {
     --bottom-bar-row-height: clamp(60px, 16vw, 76px);
     gap: 10px;
-    padding: 10px 14px;
+    padding: 0 14px;
     min-height: var(--bottom-bar-row-height);
   }
 
-  html body .playground .bottom-bar__attack .game-img-btn__img {
+  html body .playground .bottom-bar__attack {
     max-height: var(--bottom-bar-row-height);
+    height: var(--bottom-bar-row-height);
   }
 
   html body .playground .bottom-bar__actions {
@@ -306,9 +420,32 @@
     width: auto;
   }
 
+  html body .playground .playground__footer {
+    --playground-footer-pad-y: 12px;
+  }
+
   html body .playground .playground__ad-milestone {
-    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
     width: min(42vw, 420px);
+  }
+
+  html body .playground .playground__ad-milestone .ad-milestone {
+    align-items: center;
+    min-height: var(--bottom-bar-row-height);
+  }
+
+  html body .playground .playground__ad-milestone .ad-milestone__icon {
+    width: clamp(40px, 5vw, 52px);
+    height: clamp(40px, 5vw, 52px);
+  }
+
+  html body .playground .playground__ad-milestone .ad-milestone__track {
+    height: clamp(40px, 5vw, 52px);
+  }
+
+  html body .playground .playground__ad-milestone .ad-milestone__reward {
+    min-width: clamp(88px, 11vw, 112px);
+    min-height: clamp(40px, 5vw, 52px);
+    padding-right: clamp(54px, 6.8vw, 70px);
   }
 }
 
@@ -317,14 +454,15 @@
   :root {
     --game-hud-btn-width: clamp(68px, 19vw, 108px);
     --game-coin-banner-width: clamp(108px, 30vw, 168px);
-    --game-side-card-width: clamp(108px, 28vw, 148px);
+    --game-side-card-width: clamp(112px, 30vw, 156px);
+    --game-side-card-stage-height: clamp(100px, 26vw, 140px);
     --game-attack-btn-width: clamp(124px, 36vw, 168px);
     --game-combo-bar-width: min(100%, 100%);
     --game-field-toy-size: clamp(96px, 27vw, 150px);
-    --game-side-toy-size: clamp(58px, 16vw, 108px);
-    --game-battle-toy-size: clamp(82px, 17vmin, 145px);
-    --game-battle-hp-width: clamp(58px, 9.5vmin, 86px);
-    --game-battle-hp-height: clamp(6px, 1.3vmin, 8px);
+    --game-side-toy-size: clamp(136px, 36vw, 182px);
+    --game-battle-toy-size: clamp(104px, 22vmin, 172px);
+    --game-battle-hp-width: clamp(74px, 12vmin, 98px);
+    --game-battle-hp-height: clamp(7px, 1.5vmin, 9px);
     --game-modal-grid-cols: 3;
     --game-modal-picker-hero: min(88px, 24vw);
     --game-hud-icon-size: 40px;
@@ -410,7 +548,7 @@
   html body .playground .playground__stage {
     flex-direction: column;
     align-items: stretch;
-    overflow: hidden;
+    overflow: visible;
   }
 
   html body .playground .floor-arena {
@@ -421,52 +559,99 @@
 
   html body .playground .side-shop {
     flex-direction: row;
-    justify-content: center;
-    align-items: stretch;
+    justify-content: stretch;
+    align-items: flex-end;
     align-self: stretch;
     flex-shrink: 0;
-    gap: 10px;
-    padding: 4px 8px 6px;
+    gap: 6px;
+    padding: 2px 8px 0;
+    width: 100%;
+    overflow: visible;
+  }
+
+  html body .playground .side-shop .game-side-card {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    overflow: visible;
+  }
+
+  html body .playground .game-side-card__frame {
+    padding: 3px;
+    overflow: visible;
+    width: 100%;
+  }
+
+  html body .playground .game-side-card__stage {
+    aspect-ratio: auto;
+    width: 100%;
+    height: var(--game-side-card-stage-height);
+    min-height: var(--game-side-card-stage-height);
+    max-height: var(--game-side-card-stage-height);
+    overflow: visible;
+    padding-bottom: clamp(28px, 7vw, 36px);
+  }
+
+  html body .playground .game-side-card__ribbon-text {
+    font-size: clamp(16px, 4.2vw, 21px);
+  }
+
+  html body .playground .game-side-card__ribbon {
+    min-height: clamp(28px, 7vw, 36px);
+    padding: 4px 8px;
+    gap: 5px;
+  }
+
+  html body .playground .game-side-card__ribbon-icon {
+    width: clamp(20px, 5.2vw, 28px);
+    height: clamp(20px, 5.2vw, 28px);
+  }
+
+  html body .playground .game-side-card__toy .toy-sprite__img {
+    width: var(--game-side-toy-size);
+    height: var(--game-side-toy-size);
+    max-width: none;
+    margin: clamp(-32px, -8vw, -18px) clamp(-14px, -3.5vw, -8px)
+      clamp(-2px, -0.5vw, 0) clamp(-14px, -3.5vw, -8px);
+  }
+
+  html body .playground .playground__footer {
+    --playground-footer-pad-y: 2px;
   }
 
   html body .playground .bottom-bar {
     gap: 4px;
-    padding: 8px;
+    padding: 0 8px;
   }
 
   html body .playground .bottom-bar__actions {
     gap: 8px;
   }
 
-  html body .playground .bottom-bar__cooldown-btn {
-    gap: 8px;
-    padding: 8px 12px;
+  html body .playground .bottom-bar__attack {
+    width: 100%;
+    max-width: 100%;
   }
 
-  html body .playground .bottom-bar__ad-btn {
-    gap: 6px;
-    padding: 8px 12px;
+  html body .playground .game-attack-btn:not(.game-attack-btn--ad) {
+    --sword-icon-slot: clamp(38px, 10vw, 50px);
+    --sword-icon-gap: clamp(8px, 2vw, 10px);
+    --sword-text-half: clamp(32px, 8vw, 42px);
   }
 
-  html body .playground .bottom-bar__ad-btn-icon {
-    width: clamp(22px, 6vw, 28px);
-    height: clamp(22px, 6vw, 28px);
+  html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__label {
+    padding-left: clamp(12px, 3.2vw, 16px);
+    padding-right: clamp(12px, 3.2vw, 16px);
   }
 
-  html body .playground .bottom-bar__actions {
-    gap: 8px;
+  html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
+    right: auto;
+    left: calc(50% + var(--sword-text-half) + var(--sword-icon-gap));
+    transform: translateY(-50%);
   }
 
-  html body .playground .bottom-bar__attack .game-img-btn__img,
-  html body .playground .bottom-bar__cooldown-btn {
-    width: var(--bottom-action-btn-width, var(--game-attack-btn-width));
-  }
-
-  html body .playground .bottom-bar__cooldown-title {
-    font-size: clamp(18px, 5vw, 26px);
-  }
-
-  html body .playground .bottom-bar__cooldown {
+  html body .playground .game-attack-btn--cooldown .game-attack-btn__label {
     font-size: clamp(15px, 4.2vw, 22px);
   }
 
@@ -526,13 +711,14 @@
   :root {
     --game-hud-btn-width: clamp(56px, 14vw, 88px);
     --game-coin-banner-width: clamp(96px, 24vw, 140px);
-    --game-side-card-width: clamp(88px, 18vw, 120px);
+    --game-side-card-width: clamp(88px, 18vw, 116px);
+    --game-side-card-stage-height: clamp(72px, 15vw, 96px);
     --game-attack-btn-width: clamp(108px, 28vw, 148px);
     --game-field-toy-size: clamp(72px, 18vw, 110px);
-    --game-side-toy-size: clamp(48px, 12vw, 80px);
-    --game-battle-toy-size: clamp(64px, 14vmin, 105px);
-    --game-battle-hp-width: clamp(52px, 8.5vmin, 78px);
-    --game-battle-hp-height: clamp(5px, 1.2vmin, 7px);
+    --game-side-toy-size: clamp(112px, 24vw, 142px);
+    --game-battle-toy-size: clamp(78px, 16vmin, 118px);
+    --game-battle-hp-width: clamp(58px, 9.5vmin, 84px);
+    --game-battle-hp-height: clamp(6px, 1.35vmin, 8px);
     --game-modal-grid-cols: 4;
   }
 
@@ -574,7 +760,7 @@
   }
 
   html body .playground .bottom-bar {
-    padding: 8px;
+    padding: 0 8px;
   }
 
   html body .battle-screen__arena {
@@ -597,7 +783,7 @@
     --game-modal-grid-cols: 3;
   }
 
-  html body .playground .bottom-bar__ad-btn-text {
+  html body .playground .game-attack-btn--ad .game-attack-btn__label {
     font-size: clamp(16px, 4.8vw, 22px);
   }
 }
@@ -626,9 +812,13 @@
     width: 100%;
   }
 
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__attack-wrap,
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__cooldown-btn,
-  html body .playground .bottom-bar__actions--cooldown-ad .bottom-bar__ad-btn {
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .bottom-bar__attack,
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .bottom-bar__ad-btn {
     flex: 1 1 0;
     width: auto;
     min-width: 0;

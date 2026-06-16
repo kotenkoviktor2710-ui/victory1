@@ -142,13 +142,8 @@ onMounted(() => {
         @attack="onAttack"
         @skip-cooldown="onSkipAttackCooldown"
       />
+      <AdMilestoneBar ref="adMilestoneRef" class="playground__ad-milestone" />
     </div>
-
-    <AdMilestoneBar
-      v-show="!isBattleActive"
-      ref="adMilestoneRef"
-      class="playground__ad-milestone"
-    />
 
     <CollectionModal :open="showCollection" @close="showCollection = false" />
     <PvpModal
@@ -225,14 +220,21 @@ onMounted(() => {
   position: relative;
   z-index: 10;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   flex-shrink: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overflow: visible;
+  --playground-footer-pad-y: 10px;
+  padding-top: var(--playground-footer-pad-y);
+  padding-bottom: calc(var(--playground-footer-pad-y) + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .playground__footer :deep(.bottom-bar) {
   flex: 1;
   width: 100%;
+  min-height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
+  height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
+  max-height: var(--bottom-bar-row-height, clamp(56px, 15vw, 72px));
 }
 
 .playground__stage {
@@ -247,10 +249,15 @@ onMounted(() => {
 .playground__ad-milestone {
   position: absolute;
   right: clamp(10px, 3vw, 18px);
-  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  top: var(--playground-footer-pad-y, 10px);
+  bottom: calc(var(--playground-footer-pad-y, 10px) + env(safe-area-inset-bottom, 0px));
   left: auto;
   z-index: 11;
+  display: flex;
+  align-items: center;
   width: min(62vw, 360px);
+  height: auto;
+  overflow: visible;
   pointer-events: none;
 }
 </style>

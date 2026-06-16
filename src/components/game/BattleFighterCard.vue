@@ -31,6 +31,7 @@ defineProps<{
         :key="hit.id"
         class="battle-fighter__hit-word"
         :class="{ 'battle-fighter__hit-word--crit': hit.isCrit }"
+        :style="{ left: `${hit.xPercent}%`, top: `${hit.yPercent}%` }"
       >
         {{ hit.word }}
       </span>
@@ -39,6 +40,7 @@ defineProps<{
         :key="dmg.id"
         class="battle-fighter__damage game-text-stroke"
         :class="{ 'battle-fighter__damage--crit': dmg.isCrit }"
+        :style="{ left: `${dmg.xPercent}%`, top: `${dmg.yPercent}%` }"
       >
         -{{ formatNumber(dmg.amount) }}
       </span>
@@ -159,6 +161,7 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
   opacity: 1;
 }
 
@@ -173,8 +176,6 @@ defineProps<{
 
 .battle-fighter__hit-word {
   position: absolute;
-  top: 58%;
-  left: 50%;
   z-index: 3;
   font-size: clamp(24px, 5.8vw, 42px);
   font-weight: 900;
@@ -235,8 +236,6 @@ defineProps<{
 
 .battle-fighter__damage {
   position: absolute;
-  top: 8%;
-  left: 50%;
   z-index: 2;
   font-size: clamp(18px, 4.6vw, 30px);
   color: #ff5252;
@@ -305,6 +304,13 @@ defineProps<{
   100% {
     opacity: 0;
     transform: translate(-50%, -42px) scale(1);
+  }
+}
+
+@media (min-width: 1025px) {
+  .battle-fighter--player,
+  .battle-fighter--enemy {
+    align-items: center;
   }
 }
 </style>

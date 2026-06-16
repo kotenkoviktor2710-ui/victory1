@@ -126,19 +126,18 @@ export function simulateBattleDetailed(
     enemyUnits.some((u) => u.health > 0)
   ) {
     const livingPlayers = playerUnits.filter((u) => u.health > 0)
+    const playerTargets = enemyUnits.filter((u) => u.health > 0)
+    if (playerTargets.length === 0) break
+    const playerTarget = playerTargets[0]!
 
     for (let i = 0; i < livingPlayers.length; i += 1) {
       const attacker = livingPlayers[i]!
-      const targets = enemyUnits.filter((u) => u.health > 0)
-      if (targets.length === 0) break
-
-      const target = targets[i % targets.length]!
       const { damage, isCrit } = rollDamage(attacker)
-      target.health = Math.max(0, target.health - damage)
+      playerTarget.health = Math.max(0, playerTarget.health - damage)
 
       actions.push({
         attackerId: attacker.id,
-        targetId: target.id,
+        targetId: playerTarget.id,
         damage,
         isCrit,
         waveIndex,
@@ -150,19 +149,18 @@ export function simulateBattleDetailed(
     if (!enemyUnits.some((u) => u.health > 0)) break
 
     const livingEnemies = enemyUnits.filter((u) => u.health > 0)
+    const enemyTargets = playerUnits.filter((u) => u.health > 0)
+    if (enemyTargets.length === 0) break
+    const enemyTarget = enemyTargets[0]!
 
     for (let i = 0; i < livingEnemies.length; i += 1) {
       const attacker = livingEnemies[i]!
-      const targets = playerUnits.filter((u) => u.health > 0)
-      if (targets.length === 0) break
-
-      const target = targets[i % targets.length]!
       const { damage, isCrit } = rollDamage(attacker)
-      target.health = Math.max(0, target.health - damage)
+      enemyTarget.health = Math.max(0, enemyTarget.health - damage)
 
       actions.push({
         attackerId: attacker.id,
-        targetId: target.id,
+        targetId: enemyTarget.id,
         damage,
         isCrit,
         waveIndex,

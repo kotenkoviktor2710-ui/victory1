@@ -6,7 +6,7 @@ import { TOY_BY_ID, TOY_CATALOG, STARTER_TOY_ID } from '@/domain/data/toys'
 import type { PvpTeamSlot } from '@/domain/pvp/types'
 import { publishPvpDefense } from '@/yandex/pvpSync'
 import { MAX_FIELD_TOYS, clampFieldPosition, normalizeBoard, randomFieldPosition } from '@/domain/field'
-import { getRemovableToyIds } from '@/domain/fieldCleanup'
+import { getRemovableToyIds, pickBoardToysForReplacement } from '@/domain/fieldCleanup'
 import {
   calcClickReward,
   getClickRewardByLevel,
@@ -306,6 +306,45 @@ export const useGameStore = defineStore('game', () => {
     teamInstanceIds.value = teamInstanceIds.value.filter((id) => !removeIds.has(id))
   }
 
+  function removeToysFromBoard(instanceIds: string[]): void {
+    if (instanceIds.length === 0) return
+
+    const removeIds = new Set(instanceIds)
+    board.value = board.value.filter((toy) => !removeIds.has(toy.instanceId))
+    teamInstanceIds.value = teamInstanceIds.value.filter((id) => !removeIds.has(id))
+  }
+
+  /** Освобождает слот для награды за рекламу: убирает самую слабую игрушку на поле. */
+  function freeSlotForAdMilestoneGrant(): { x: number; y: number } | null {
+    if (canAddToy()) return null
+
+    const [victim] = pickBoardToysForReplacement(board.value, 1, {
+      protectInstanceIds: teamInstanceIds.value,
+    })
+    if (!victim) return null
+
+    const position = { x: victim.x, y: victim.y }
+    removeToysFromBoard([victim.instanceId])
+    return position
+  }
+
+  function beginAdMilestoneGrant(): PendingPurchase | null {
+    const def = TOY_BY_ID[STARTER_TOY_ID]
+    if (!def) return null
+
+    const reusePosition = freeSlotForAdMilestoneGrant()
+    if (!canAddToy() && !reusePosition) return null
+
+    const toy = createPlacedToy(STARTER_TOY_ID, shopAdGrantLevel.value)
+    if (reusePosition) {
+      toy.x = reusePosition.x
+      toy.y = reusePosition.y
+    }
+
+    trackPendingToy(toy)
+    return { toy }
+  }
+
   function commitToyToBoard(toy: PlacedToy): boolean {
     pendingToys.value = pendingToys.value.filter((entry) => entry.instanceId !== toy.instanceId)
     if (board.value.length >= MAX_FIELD_TOYS) return false
@@ -316,8 +355,8 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function flushAdMilestonePendingGrants(): void {
-    while (adMilestonePendingToys.value > 0 && canAddToy()) {
-      const pending = beginGrant(STARTER_TOY_ID, shopAdGrantLevel.value)
+    while (adMilestonePendingToys.value > 0) {
+      const pending = beginAdMilestoneGrant()
       if (!pending) break
       adMilestonePendingToys.value -= 1
       if (!commitToyToBoard(pending.toy)) break
@@ -343,8 +382,7 @@ export const useGameStore = defineStore('game', () => {
     const limit = Math.min(maxCount, adMilestonePendingToys.value)
 
     for (let i = 0; i < limit; i += 1) {
-      if (!canAddToy()) break
-      const pending = beginGrant(STARTER_TOY_ID, shopAdGrantLevel.value)
+      const pending = beginAdMilestoneGrant()
       if (!pending) break
       toys.push(pending.toy)
       adMilestonePendingToys.value -= 1

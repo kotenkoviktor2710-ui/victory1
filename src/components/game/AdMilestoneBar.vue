@@ -36,8 +36,7 @@ defineExpose({
     <div class="ad-milestone__reward" aria-hidden="true">
       <span class="ad-milestone__reward-text game-text-stroke">+{{ AD_MILESTONE_REWARD_TOYS }}</span>
       <div class="ad-milestone__reward-toys">
-        <ToySprite :level="game.shopAdGrantLevel" size="28px" />
-        <ToySprite :level="game.shopAdGrantLevel" size="28px" />
+        <ToySprite :level="game.shopAdGrantLevel" />
       </div>
     </div>
   </div>
@@ -49,6 +48,7 @@ defineExpose({
   align-items: center;
   gap: clamp(6px, 1.6vw, 10px);
   width: 100%;
+  overflow: visible;
 }
 
 .ad-milestone__icon {
@@ -66,7 +66,7 @@ defineExpose({
   min-width: 0;
   height: clamp(34px, 8.8vw, 44px);
   border: 3px solid var(--game-ink);
-  border-radius: 8px;
+  border-radius: 0;
   background: #fff;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
@@ -98,35 +98,62 @@ defineExpose({
 }
 
 .ad-milestone__reward {
+  position: relative;
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   gap: 4px;
+  min-width: clamp(72px, 18vw, 92px);
   min-height: clamp(30px, 8vw, 36px);
-  padding: 4px 8px 4px 10px;
+  padding: 4px clamp(44px, 11vw, 56px) 4px 10px;
   border: 2.5px solid var(--game-blue-deep);
-  border-radius: 999px;
+  border-radius: 0;
   background: linear-gradient(180deg, #b39ddb 0%, #7e57c2 100%);
   box-shadow: var(--game-shadow-inset), var(--game-shadow);
+  overflow: visible;
   pointer-events: none;
 }
 
 .ad-milestone__reward-text {
+  position: relative;
+  z-index: 1;
+  flex: 1;
   font-size: clamp(14px, 3.6vw, 18px);
   white-space: nowrap;
 }
 
 .ad-milestone__reward-toys {
+  position: absolute;
+  right: clamp(-12px, -3vw, -6px);
+  top: 50%;
+  z-index: 2;
   display: flex;
   align-items: center;
-  margin-left: -2px;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .ad-milestone__reward-toys :deep(.toy-sprite) {
-  margin-left: -10px;
+  --toy-size: clamp(48px, 12vw, 62px);
 }
 
-.ad-milestone__reward-toys :deep(.toy-sprite:first-child) {
-  margin-left: 0;
+.ad-milestone__reward-toys :deep(.toy-sprite__img) {
+  filter: drop-shadow(1px 3px 2px rgba(0, 0, 0, 0.35));
+}
+
+@media (min-width: 1025px) {
+  .ad-milestone__reward {
+    min-width: clamp(88px, 11vw, 112px);
+    min-height: clamp(40px, 5vw, 52px);
+    padding-right: clamp(54px, 6.8vw, 70px);
+  }
+
+  .ad-milestone__reward-toys {
+    right: clamp(-16px, -2vw, -10px);
+  }
+
+  .ad-milestone__reward-toys :deep(.toy-sprite) {
+    --toy-size: clamp(58px, 7.2vw, 76px);
+  }
 }
 </style>
