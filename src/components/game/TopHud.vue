@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import ComboBar from '@/components/game/ComboBar.vue'
 import ComboCircle from '@/components/game/ComboCircle.vue'
 import HudAudioControls from '@/components/game/HudAudioControls.vue'
+import { useI18n } from '@/i18n'
 import { formatNumber } from '@/domain/formulas/economy'
 import { useGameStore } from '@/stores/gameStore'
 
@@ -11,6 +12,8 @@ const emit = defineEmits<{
   collection: []
   freeToys: [fromRect: DOMRect]
 }>()
+
+const { t } = useI18n()
 
 function onFreeToys(event: MouseEvent): void {
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
@@ -31,7 +34,7 @@ const coinDisplay = computed(() => formatNumber(game.coins))
           class="game-hud-menu-btn game-hud-menu-btn--purple"
           @click="emit('collection')"
         >
-          <span class="game-hud-menu-btn__label game-text-stroke">Коллекция</span>
+          <span class="game-hud-menu-btn__label game-text-stroke">{{ t('hud.collection') }}</span>
           <img
             class="game-hud-menu-btn__icon"
             src="/images/collection-icon.png"
@@ -42,10 +45,10 @@ const coinDisplay = computed(() => formatNumber(game.coins))
         <button
           type="button"
           class="game-hud-menu-btn game-hud-menu-btn--gold"
-          aria-label="Бесплатный персонаж"
+          :aria-label="t('hud.freeCharacter')"
           @click="onFreeToys"
         >
-          <span class="game-hud-menu-btn__label game-text-stroke">Бесплатный персонаж</span>
+          <span class="game-hud-menu-btn__label game-text-stroke">{{ t('hud.freeCharacter') }}</span>
           <img
             class="game-hud-menu-btn__icon"
             src="/images/review-icon.png"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import GameModal from '@/components/game/GameModal.vue'
+import { useI18n } from '@/i18n'
 import { formatNumber } from '@/domain/formulas/economy'
 import type { InboundAttack } from '@/domain/pvp/types'
 
@@ -11,10 +12,12 @@ const emit = defineEmits<{
   accept: []
   flee: []
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
-  <GameModal title="На вас напал игрок:" @close="emit('flee')">
+  <GameModal :title="t('inbound.title')" @close="emit('flee')">
     <div class="inbound-attack__hero">
       <img
         v-if="attack.attackerAvatar"
@@ -25,7 +28,7 @@ const emit = defineEmits<{
       />
       <p class="inbound-attack__name game-text-stroke">{{ attack.attackerName }}</p>
       <p class="inbound-attack__meta game-text-stroke">
-        Сила {{ formatNumber(attack.power) }}
+        {{ t('inbound.power', { power: formatNumber(attack.power) }) }}
       </p>
     </div>
 
@@ -35,14 +38,14 @@ const emit = defineEmits<{
         class="game-sketch-btn game-sketch-btn--green game-modal-picker__action game-text-stroke"
         @click="emit('accept')"
       >
-        В БОЙ!
+        {{ t('inbound.fight') }}
       </button>
       <button
         type="button"
         class="game-sketch-btn game-sketch-btn--red game-modal-picker__action game-text-stroke"
         @click="emit('flee')"
       >
-        Убежать
+        {{ t('pvp.flee') }}
       </button>
     </div>
   </GameModal>

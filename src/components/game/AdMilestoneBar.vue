@@ -3,10 +3,12 @@ import { computed, ref } from 'vue'
 
 import ToySprite from '@/components/game/ToySprite.vue'
 import { AD_MILESTONE_REWARD_TOYS, AD_MILESTONE_VIEWS } from '@/domain/constants'
+import { useI18n } from '@/i18n'
 import { useGameStore } from '@/stores/gameStore'
 
 const rootRef = ref<HTMLElement | null>(null)
 const game = useGameStore()
+const { t } = useI18n()
 
 const progressPercent = computed(() => game.adMilestoneProgressPercent)
 
@@ -27,7 +29,7 @@ defineExpose({
       :aria-valuenow="game.rewardedAdViews"
       :aria-valuemin="0"
       :aria-valuemax="AD_MILESTONE_VIEWS"
-      aria-label="Прогресс просмотра рекламы"
+      :aria-label="t('ad.milestoneAria')"
     >
       <span class="ad-milestone__fill" :style="{ width: `${progressPercent}%` }" />
       <span class="ad-milestone__label game-text-stroke">{{ game.adMilestoneProgressLabel }}</span>

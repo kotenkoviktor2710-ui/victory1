@@ -2,6 +2,7 @@
 // In dev (or any page without window.YaGames) returns null and we fall back
 // to dev stubs in the ads module.
 
+import { applyLocale, getActiveLocale, resolvePlatformLocale } from '@/i18n'
 import { bindPlatformPauseEvents } from '@/yandex/platformEvents'
 import type {
   Ysdk,
@@ -31,7 +32,6 @@ export type {
 } from '@/yandex/types'
 
 let ysdk: Ysdk | null = null
-let lang: string = 'ru'
 let initPromise: Promise<Ysdk | null> | null = null
 let sessionStartMs: number | null = null
 
@@ -81,8 +81,11 @@ export function initYandex(): Promise<Ysdk | null> {
   const p: Promise<Ysdk | null> = waitForYaGames().then((YaGames: unknown) => {
     const games = YaGames as { init?: () => Promise<Ysdk> } | null
     if (!games || typeof games.init !== 'function') {
+      const locale = applyLocale(resolvePlatformLocale(null))
       if (import.meta.env.DEV) {
-        console.info('[yandex sdk] YaGames not present — running without SDK (dev mode ok)')
+        console.info('[yandex sdk] YaGames not present — running without SDK (dev mode ok)', {
+          locale,
+        })
       }
       return null
     }
@@ -91,15 +94,15 @@ export function initYandex(): Promise<Ysdk | null> {
       .then((sdk: Ysdk) => {
         ysdk = sdk
         sessionStartMs = getServerTime()
-        const detected = sdk.environment?.i18n?.lang
-        if (detected) lang = detected
+        const locale = applyLocale(resolvePlatformLocale(sdk))
         bindPlatformPauseEvents()
         if (import.meta.env.DEV) {
-          console.info('[yandex sdk] initialized', { lang, env: sdk.environment })
+          console.info('[yandex sdk] initialized', { locale, env: sdk.environment })
         }
         return sdk
       })
       .catch((err: unknown) => {
+        applyLocale(resolvePlatformLocale(null))
         if (import.meta.env.DEV) console.warn('[yandex sdk] init failed', err)
         return null
       })
@@ -128,14 +131,14 @@ export async function isSdkMethodAvailable(method: string): Promise<boolean> {
   }
 }
 
-/** Язык игрока из ysdk.environment.i18n.lang. Дефолт — 'ru'. */
+/** Язык интерфейса из ysdk.environment.i18n.lang (ISO 639-1). */
 export function getLang(): string {
-  return lang
+  return getActiveLocale()
 }
 
-/** Синхронизирует `<html lang>` с языком платформы (контент игры — только ru). */
+/** Синхронизирует `<html lang>` с языком платформы. */
 export function syncDocumentLang(): void {
-  document.documentElement.lang = getLang()
+  document.documentElement.lang = getActiveLocale()
 }
 
 let gameplayInitDone = false

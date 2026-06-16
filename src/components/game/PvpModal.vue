@@ -7,6 +7,7 @@ import { TOY_BY_ID } from '@/domain/data/toys'
 import { formatNumber, getToyStats } from '@/domain/formulas/economy'
 import type { PlacedToy } from '@/domain/types/toy'
 import { usePvp } from '@/composables/usePvp'
+import { useI18n } from '@/i18n'
 import { useGameStore } from '@/stores/gameStore'
 
 const props = defineProps<{
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const game = useGameStore()
+const { t } = useI18n()
 const { canBattle, lastBattle, clearBattleState } = usePvp()
 
 function isSelected(instanceId: string): boolean {
@@ -58,12 +60,12 @@ watch(
   <GameModal
     v-if="open"
     picker
-    title="Выберите до 5 игрушек"
+    :title="t('pvp.selectTeam')"
     @close="emit('close')"
   >
     <template #subtitle>
       <p class="game-modal__subtitle game-text-stroke">
-        Выбрано {{ game.teamInstanceIds.length }}/5
+        {{ t('pvp.selected', { count: game.teamInstanceIds.length }) }}
       </p>
     </template>
 
@@ -96,13 +98,13 @@ watch(
       </div>
     </div>
 
-    <p v-else class="game-modal-picker__empty">На поле нет игрушек — добавь персонажей и возвращайся в бой.</p>
+    <p v-else class="game-modal-picker__empty">{{ t('pvp.emptyBoard') }}</p>
 
     <div v-if="lastBattle" class="game-modal-result">
       <p class="pvp-modal__result-text">
-        {{ lastBattle.winner === 'player' ? 'Победа!' : 'Поражение' }}
-        · +{{ formatNumber(lastBattle.coinReward) }} монет
-        · рейтинг {{ lastBattle.ratingDelta > 0 ? '+' : '' }}{{ lastBattle.ratingDelta }}
+        {{ lastBattle.winner === 'player' ? t('pvp.victory') : t('pvp.defeat') }}
+        · {{ t('pvp.coinsReward', { amount: formatNumber(lastBattle.coinReward) }) }}
+        · {{ t('pvp.rating', { delta: `${lastBattle.ratingDelta > 0 ? '+' : ''}${lastBattle.ratingDelta}` }) }}
       </p>
     </div>
 
@@ -113,14 +115,14 @@ watch(
         :disabled="!canBattle || loading"
         @click="onBattle"
       >
-        {{ loading ? 'Поиск...' : 'Начать бой' }}
+        {{ loading ? t('pvp.searching') : t('pvp.startBattle') }}
       </button>
       <button
         type="button"
         class="game-sketch-btn game-sketch-btn--red game-modal-picker__action game-text-stroke"
         @click="onFlee"
       >
-        Убежать
+        {{ t('pvp.flee') }}
       </button>
     </div>
   </GameModal>

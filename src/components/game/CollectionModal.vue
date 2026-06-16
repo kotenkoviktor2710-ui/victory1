@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import GameModal from '@/components/game/GameModal.vue'
 import ToySprite from '@/components/game/ToySprite.vue'
+import { useI18n } from '@/i18n'
 import { MAX_TOY_LEVEL } from '@/domain/types/toy'
 import { useGameStore } from '@/stores/gameStore'
 
@@ -13,6 +14,7 @@ const emit = defineEmits<{
 }>()
 
 const game = useGameStore()
+const { t } = useI18n()
 
 const collectionLevels = Array.from({ length: MAX_TOY_LEVEL }, (_, index) => index + 1)
 const COLLECTION_CARD_TONES = 12
@@ -23,7 +25,7 @@ function cardTone(level: number): number {
 </script>
 
 <template>
-  <GameModal v-if="open" picker title="Коллекция" @close="emit('close')">
+  <GameModal v-if="open" picker :title="t('collection.title')" @close="emit('close')">
     <div class="game-modal-picker__scroll">
       <div class="collection-grid">
         <div
@@ -60,7 +62,7 @@ function cardTone(level: number): number {
         class="game-sketch-btn game-sketch-btn--red game-modal-picker__action game-text-stroke"
         @click="emit('close')"
       >
-        Закрыть
+        {{ t('modal.close') }}
       </button>
     </div>
   </GameModal>

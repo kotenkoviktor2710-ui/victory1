@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { useClicker } from '@/composables/useClicker'
 import { COMBO_LEVEL_COLORS, COMBO_MULTIPLIERS } from '@/domain/types/game'
+import { useI18n } from '@/i18n'
 
 const RING_RADIUS = 42
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
@@ -10,6 +11,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 const levelStrokeColors = ['#bdbdbd', '#7ee06a', '#64b5f6', '#ce93d8', '#ef5350']
 
 const { comboBarPercent, comboLabel, comboLevel } = useClicker()
+const { t } = useI18n()
 
 const comboColor = computed(
   () => COMBO_LEVEL_COLORS[comboLevel.value] ?? COMBO_LEVEL_COLORS[0],
@@ -33,7 +35,7 @@ const progressOffset = computed(
     class="combo-circle"
     role="status"
     aria-live="polite"
-    :aria-label="`Множитель ${comboLabel}, прогресс ${Math.round(comboBarPercent)}%`"
+    :aria-label="t('combo.aria', { label: comboLabel, percent: Math.round(comboBarPercent) })"
   >
     <svg class="combo-circle__svg" viewBox="0 0 100 100" aria-hidden="true">
       <circle

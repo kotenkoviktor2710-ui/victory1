@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useHudAudio } from '@/composables/useHudAudio'
+import { useI18n } from '@/i18n'
 
 const { soundOn, musicOn, toggleSound, toggleMusic } = useHudAudio()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -9,7 +11,7 @@ const { soundOn, musicOn, toggleSound, toggleMusic } = useHudAudio()
     <button
       type="button"
       class="hud-audio__btn"
-      :aria-label="soundOn ? 'Звук' : 'Звук выключен'"
+      :aria-label="soundOn ? t('audio.soundOn') : t('audio.soundOff')"
       @click="toggleSound"
     >
       <span class="hud-audio__icon-wrap" :class="{ 'hud-audio__icon-wrap--off': !soundOn }">
@@ -20,7 +22,7 @@ const { soundOn, musicOn, toggleSound, toggleMusic } = useHudAudio()
     <button
       type="button"
       class="hud-audio__btn"
-      :aria-label="musicOn ? 'Музыка' : 'Музыка выключена'"
+      :aria-label="musicOn ? t('audio.musicOn') : t('audio.musicOff')"
       @click="toggleMusic"
     >
       <span class="hud-audio__icon-wrap" :class="{ 'hud-audio__icon-wrap--off': !musicOn }">

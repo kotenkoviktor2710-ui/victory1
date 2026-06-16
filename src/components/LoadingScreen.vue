@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
+import { useI18n } from '@/i18n'
+
 const progress = ref(0)
+const { t } = useI18n()
 
 const progressPercent = computed(() => Math.round(progress.value * 100))
 
@@ -27,7 +30,7 @@ defineExpose({ setProgress, finish, waitUntilReady })
     role="status"
     aria-live="polite"
     aria-busy="true"
-    aria-label="Загрузка"
+    :aria-label="t('loading.aria')"
   >
     <div class="loading-screen__bg" aria-hidden="true" />
     <div class="loading-screen__shade" aria-hidden="true" />
@@ -40,7 +43,7 @@ defineExpose({ setProgress, finish, waitUntilReady })
           <img class="loading-screen__toy loading-screen__toy--right" src="/images/toys/25.png" alt="" />
         </div>
 
-        <p class="loading-screen__label game-text-stroke">Загрузка…</p>
+        <p class="loading-screen__label game-text-stroke">{{ t('loading.label') }}</p>
 
         <div
           class="loading-screen__track"
@@ -48,7 +51,7 @@ defineExpose({ setProgress, finish, waitUntilReady })
           :aria-valuenow="progressPercent"
           aria-valuemin="0"
           aria-valuemax="100"
-          :aria-label="`Загрузка ${progressPercent}%`"
+          :aria-label="t('loading.progress', { percent: progressPercent })"
         >
           <span class="loading-screen__fill" :style="{ width: `${progressPercent}%` }" />
           <span class="loading-screen__percent game-text-stroke">{{ progressPercent }}%</span>

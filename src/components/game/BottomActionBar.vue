@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import HudAudioControls from '@/components/game/HudAudioControls.vue'
+import { useI18n } from '@/i18n'
 
 defineProps<{
   canAttack: boolean
@@ -11,6 +12,8 @@ const emit = defineEmits<{
   attack: []
   'skip-cooldown': []
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -30,12 +33,12 @@ const emit = defineEmits<{
           class="game-attack-btn bottom-bar__attack"
           :class="{ 'game-attack-btn--cooldown': !canAttack }"
           :disabled="!canAttack"
-          :aria-label="canAttack ? 'Напасть' : `Кулдаун нападения ${cooldownLabel}`"
+          :aria-label="canAttack ? t('hud.attack') : t('hud.attackCooldown', { time: cooldownLabel })"
           :aria-live="canAttack ? undefined : 'polite'"
           @click="emit('attack')"
         >
           <span class="game-attack-btn__label game-text-stroke">
-            {{ canAttack ? 'Напасть' : cooldownLabel }}
+            {{ canAttack ? t('hud.attack') : cooldownLabel }}
           </span>
           <span class="game-attack-btn__icon" aria-hidden="true">
             <img class="game-attack-btn__sword" src="/images/sword.png" alt="" />
@@ -46,10 +49,10 @@ const emit = defineEmits<{
           v-if="showCooldownAd"
           type="button"
           class="game-attack-btn game-attack-btn--ad bottom-bar__ad-btn"
-          aria-label="Не ждать — сбросить ожидание за просмотр рекламы"
+          :aria-label="t('hud.skipCooldownAria')"
           @click="emit('skip-cooldown')"
         >
-          <span class="game-attack-btn__label game-text-stroke">НЕ ЖДАТЬ!</span>
+          <span class="game-attack-btn__label game-text-stroke">{{ t('hud.dontWait') }}</span>
           <span class="game-attack-btn__icon" aria-hidden="true">
             <img class="game-attack-btn__ad-icon" src="/images/ads.png" alt="" />
           </span>

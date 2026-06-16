@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 
 import { showRewarded } from '@/ads/ads'
+import { useI18n } from '@/i18n'
 import { formatNumber } from '@/domain/formulas/economy'
 import { useRewardSlider } from '@/composables/useRewardSlider'
 
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 
 const { position, multiplier } = useRewardSlider()
 const claimed = ref(false)
+const { t } = useI18n()
 
 const bonusReward = computed(() => Math.round(props.baseReward * multiplier.value))
 
@@ -45,11 +47,11 @@ function onSkip(): void {
 
     <div class="pvp-reward">
       <h2 class="pvp-reward__title game-text-stroke">
-        {{ won ? 'Победа' : 'Поражение' }}
+        {{ won ? t('reward.victory') : t('reward.defeat') }}
       </h2>
 
       <p class="pvp-reward__hint">
-        Увеличить награду за просмотр рекламы?
+        {{ t('reward.boostHint') }}
       </p>
 
       <div class="pvp-reward__slider-wrap">
@@ -92,7 +94,7 @@ function onSkip(): void {
         :disabled="claimed"
         @click="onSkip"
       >
-        Не надо
+        {{ t('reward.skip') }}
       </button>
     </div>
   </div>

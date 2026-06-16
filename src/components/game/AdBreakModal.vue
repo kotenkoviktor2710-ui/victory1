@@ -1,7 +1,17 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+
+import { useI18n } from '@/i18n'
+
+const props = defineProps<{
   secondsLeft: number
 }>()
+
+const { t } = useI18n()
+
+const countdownAria = computed(() =>
+  t('ad.breakCountdown', { seconds: props.secondsLeft }),
+)
 </script>
 
 <template>
@@ -11,12 +21,12 @@ defineProps<{
       role="dialog"
       aria-modal="true"
       aria-live="assertive"
-      :aria-label="`Реклама через ${secondsLeft} секунд`"
+      :aria-label="countdownAria"
     >
       <div class="ad-break-modal">
-        <p class="ad-break-modal__label game-text-stroke">Скоро реклама</p>
+        <p class="ad-break-modal__label game-text-stroke">{{ t('ad.breakSoon') }}</p>
         <p class="ad-break-modal__count game-text-stroke" aria-hidden="true">{{ secondsLeft }}</p>
-        <p class="ad-break-modal__hint game-text-stroke">Игра приостановлена</p>
+        <p class="ad-break-modal__hint game-text-stroke">{{ t('ad.breakPaused') }}</p>
       </div>
     </div>
   </Teleport>

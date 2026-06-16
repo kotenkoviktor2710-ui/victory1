@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from '@/i18n'
+
 withDefaults(
   defineProps<{
     title: string
@@ -14,6 +16,8 @@ withDefaults(
 const emit = defineEmits<{
   close: []
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -31,7 +35,7 @@ const emit = defineEmits<{
           <button
             type="button"
             class="game-sketch-btn game-sketch-btn--red game-sketch-btn--sm game-modal__close"
-            aria-label="Закрыть"
+            :aria-label="t('modal.close')"
             @click="emit('close')"
           >
             ✕

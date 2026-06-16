@@ -5,11 +5,13 @@ import { showRewarded } from '@/ads/ads'
 import LottieEffect from '@/components/game/LottieEffect.vue'
 import ToySprite from '@/components/game/ToySprite.vue'
 import { getToyNameByLevel } from '@/domain/data/toyLevelNames'
+import { useI18n } from '@/i18n'
 import { useGameStore } from '@/stores/gameStore'
 
 const LIGHT_EFFECT = '/images/effects/light.json'
 
 const game = useGameStore()
+const { t } = useI18n()
 
 const celebration = computed(() => game.activeToyCelebration)
 
@@ -40,8 +42,8 @@ function onClaim(): void {
       >
         <div class="toy-acquire">
           <header class="toy-acquire__header">
-            <p class="toy-acquire__eyebrow game-text-stroke">Поздравляем!</p>
-            <h2 id="toy-acquire-title" class="toy-acquire__title game-text-stroke">Новый персонаж</h2>
+            <p class="toy-acquire__eyebrow game-text-stroke">{{ t('toy.congrats') }}</p>
+            <h2 id="toy-acquire-title" class="toy-acquire__title game-text-stroke">{{ t('toy.newCharacter') }}</h2>
           </header>
 
           <div class="toy-acquire__preview">
@@ -60,7 +62,7 @@ function onClaim(): void {
             class="game-sketch-btn game-sketch-btn--yellow toy-acquire__btn game-text-stroke"
             @click="onClaim"
           >
-            Забрать
+            {{ t('toy.claim') }}
           </button>
         </div>
       </div>

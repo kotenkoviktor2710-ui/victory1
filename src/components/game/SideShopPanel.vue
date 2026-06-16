@@ -5,6 +5,7 @@ import { showRewarded } from '@/ads/ads'
 import ToySprite from '@/components/game/ToySprite.vue'
 import { formatNumber } from '@/domain/formulas/economy'
 import { assetUrl } from '@/shared/utils/assetUrl'
+import { useI18n } from '@/i18n'
 import { useGameStore } from '@/stores/gameStore'
 
 const emit = defineEmits<{
@@ -13,6 +14,7 @@ const emit = defineEmits<{
 }>()
 
 const game = useGameStore()
+const { t } = useI18n()
 const shopBtnRef = ref<HTMLButtonElement | null>(null)
 const adBtnRef = ref<HTMLButtonElement | null>(null)
 
@@ -77,7 +79,7 @@ function onRewardedAd(): void {
     >
       <div class="game-side-card__frame">
         <div class="game-side-card__ribbon game-side-card__ribbon--ad">
-          <span class="game-side-card__ribbon-text game-text-stroke">Реклама</span>
+          <span class="game-side-card__ribbon-text game-text-stroke">{{ t('ad.ribbon') }}</span>
           <img class="game-side-card__ribbon-icon" :src="assetUrl('images/ads.png')" alt="" aria-hidden="true" />
         </div>
         <div class="game-side-card__stage game-side-card__stage--ad">
