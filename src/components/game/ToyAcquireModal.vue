@@ -13,6 +13,9 @@ const LIGHT_EFFECT = '/images/effects/light.json'
 const game = useGameStore()
 const { t } = useI18n()
 
+/** Через раз показываем rewarded при «Забрать». */
+let claimClickCount = 0
+
 const celebration = computed(() => game.activeToyCelebration)
 
 const characterName = computed(() => {
@@ -25,7 +28,15 @@ function dismiss(): void {
 }
 
 function onClaim(): void {
-  showRewarded(() => dismiss())
+  claimClickCount += 1
+  const shouldShowAd = claimClickCount % 2 === 1
+
+  if (!shouldShowAd) {
+    dismiss()
+    return
+  }
+
+  showRewarded(() => dismiss(), { grantOnFailure: true })
 }
 </script>
 

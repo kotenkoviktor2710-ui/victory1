@@ -640,23 +640,38 @@ function showRewardedVideoSafe(callbacks: YsdkRewardedCallbacks, onFail: () => v
   }
 }
 
+export interface RewardedOptions {
+  /** Выдать награду, если реклама недоступна или не была досмотрена. */
+  grantOnFailure?: boolean
+}
+
+function grantRewarded(onReward: () => void, watched: boolean): void {
+  onReward()
+  if (watched) {
+    window.dispatchEvent(new CustomEvent('ads:rewarded'))
+  }
+}
+
 /**
  * Show a rewarded video. Reward is delivered ONLY if onRewarded fires.
  * In dev (no SDK), reward is granted immediately for testing.
  */
-export function showRewarded(onReward: () => void): void {
+export function showRewarded(onReward: () => void, options?: RewardedOptions): void {
+  const grantOnFailure = options?.grantOnFailure ?? false
+
   if (adPlaying.value) {
-    window.addEventListener('ads:resume', () => showRewarded(onReward), { once: true })
+    window.addEventListener('ads:resume', () => showRewarded(onReward, options), { once: true })
     return
   }
 
   const ysdk = getYsdk()
   if (!ysdk) {
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.info('[ads] rewarded (dev stub) — granting immediately')
-      onReward()
-      window.dispatchEvent(new CustomEvent('ads:rewarded'))
+    if (import.meta.env.DEV || grantOnFailure) {
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.info('[ads] rewarded (dev stub) — granting immediately')
+      }
+      grantRewarded(onReward, import.meta.env.DEV)
     }
     return
   }
@@ -674,6 +689,11 @@ export function showRewarded(onReward: () => void): void {
   const finish = () => {
     resumeOnce()
   }
+  const tryGrant = (watched: boolean): void => {
+    if (watched || grantOnFailure) {
+      grantRewarded(onReward, watched)
+    }
+  }
 
   pauseOnce()
   showRewardedVideoSafe(
@@ -685,15 +705,16 @@ export function showRewarded(onReward: () => void): void {
       onClose: () => {
         lastAnyAdAt = getServerTime()
         finish()
-        if (granted) {
-          onReward()
-          window.dispatchEvent(new CustomEvent('ads:rewarded'))
-        }
+        tryGrant(granted)
       },
       onError: () => {
         finish()
+        tryGrant(false)
       },
     },
-    finish,
+    () => {
+      finish()
+      tryGrant(false)
+    },
   )
 }
