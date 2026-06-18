@@ -26,8 +26,8 @@ export const BOARD_SLOT_COUNTS: Record<4 | 5 | 6, number> = {
 
 export const MAX_TEAM_SIZE = 5
 
-/** Кулдаун исходящего PvP-нападения (мс). */
-export const PVP_ATTACK_COOLDOWN_MS = 2 * 60 * 1000
+/** Интервал между предложениями сразиться: исходящий кулдаун и входящие атаки (мс). */
+export const PVP_ATTACK_COOLDOWN_MS = 3 * 60 * 1000
 
 /** Интервал плановой полноэкранной рекламы в геймплее (мс). */
 export const SCHEDULED_AD_INTERVAL_MS = 2 * 60 * 1000

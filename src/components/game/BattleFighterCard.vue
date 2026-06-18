@@ -313,4 +313,19 @@ defineProps<{
     align-items: center;
   }
 }
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .battle-fighter--player,
+  .battle-fighter--enemy {
+    align-items: center;
+  }
+
+  .battle-fighter--player.battle-fighter--attacking {
+    transform: scale(1.1) translateY(-8px);
+  }
+
+  .battle-fighter--enemy.battle-fighter--attacking {
+    transform: scale(1.1) translateY(8px);
+  }
+}
 </style>

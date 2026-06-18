@@ -188,10 +188,16 @@
   }
 
   html body .playground .top-hud .game-hud-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--game-hud-row-height);
+    min-width: var(--game-hud-row-height);
+    height: var(--game-hud-row-height);
     min-height: var(--game-hud-row-height);
-    height: auto;
-    width: auto;
-    min-width: 0;
+    max-height: var(--game-hud-row-height);
+    padding: clamp(3px, 0.9vw, 5px);
+    box-sizing: border-box;
     flex-shrink: 0;
   }
 
@@ -244,7 +250,15 @@
   }
 
   html body .playground .game-attack-btn--cooldown .game-attack-btn__label {
-    font-size: clamp(14px, 3.8vw, 18px);
+    font-size: clamp(18px, 5vw, 26px);
+  }
+
+  html body .playground .game-attack-btn--cooldown:not(.game-attack-btn--ad) {
+    background: linear-gradient(180deg, #a82828 0%, #7a1515 48%, #651010 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.38),
+      2px 3px 0 rgba(0, 0, 0, 0.38);
   }
 
   html body .playground .game-attack-btn--ad .game-attack-btn__label {
@@ -262,24 +276,13 @@
     max-width: 100%;
   }
 
-  html body .playground .game-attack-btn:not(.game-attack-btn--ad) {
-    --sword-icon-slot: clamp(42px, 11vw, 56px);
-    --sword-icon-gap: clamp(8px, 2vw, 10px);
-    --sword-text-half: clamp(34px, 8.5vw, 46px);
-  }
-
   html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__label {
     padding-left: clamp(14px, 3.5vw, 20px);
-    padding-right: clamp(14px, 3.5vw, 20px);
   }
 
   html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
-    right: -20px;
-    left: auto;
-    top: -19%;
-    width: clamp(54px, 13.5vw, 90px);
-    height: clamp(54px, 13.5vw, 90px);
-    transform: rotate(-190deg);
+    width: clamp(40px, 10vw, 52px);
+    height: clamp(40px, 10vw, 52px);
   }
 
   html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__sword {
@@ -301,43 +304,33 @@
     max-width: none;
   }
 
-  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--cooldown .game-attack-btn__label {
-    font-size: clamp(11px, 3vw, 14px);
-    padding-left: clamp(8px, 2.2vw, 12px);
-    padding-right: clamp(8px, 2.2vw, 12px);
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--cooldown .game-attack-btn__content {
+    width: 100%;
+    justify-content: center;
   }
 
-  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn:not(.game-attack-btn--ad) {
-    --sword-icon-slot: clamp(34px, 8.5vw, 42px);
-    --sword-icon-gap: clamp(6px, 1.6vw, 8px);
-    --sword-text-half: clamp(18px, 4.5vw, 24px);
+  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--cooldown .game-attack-btn__label {
+    font-size: clamp(18px, 5.4vw, 26px);
+    padding-left: 0;
+    padding-right: 0;
+    text-align: center;
+    letter-spacing: 0.06em;
   }
 
   html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--ad .game-attack-btn__label {
     font-size: clamp(10px, 2.8vw, 13px);
     letter-spacing: 0.01em;
     padding-left: clamp(8px, 2.2vw, 12px);
-    padding-right: calc(var(--ad-icon-slot, 28px) + var(--ad-icon-gap, 8px));
-  }
-
-  html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--ad {
-    --ad-icon-slot: clamp(26px, 6.5vw, 32px);
-    --ad-icon-gap: clamp(8px, 2vw, 10px);
   }
 
   html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
-    right: -14px;
-    left: auto;
-    top: -19%;
-    width: clamp(40px, 10vw, 54px);
-    height: clamp(40px, 10vw, 54px);
-    transform: rotate(-190deg);
+    width: clamp(36px, 9vw, 48px);
+    height: clamp(36px, 9vw, 48px);
   }
 
   html body .playground .bottom-bar__attack-wrap--cooldown-ad .game-attack-btn--ad .game-attack-btn__icon {
-    width: var(--ad-icon-slot);
+    width: clamp(26px, 6.5vw, 32px);
     height: clamp(24px, 6vw, 30px);
-    right: clamp(4px, 1.2vw, 8px);
   }
 }
 
@@ -445,6 +438,11 @@
     min-height: clamp(40px, 5vw, 52px);
     padding-right: clamp(54px, 6.8vw, 70px);
   }
+
+  html body .playground .playground__footer .bottom-bar {
+    padding-right: calc(min(42vw, 420px) + clamp(18px, 3vw, 28px));
+    box-sizing: border-box;
+  }
 }
 
 /* ── Mobile (≤767px) ──────────────────────────────────────────── */
@@ -456,11 +454,11 @@
     --game-side-card-stage-height: clamp(100px, 26vw, 140px);
     --game-attack-btn-width: clamp(124px, 36vw, 168px);
     --game-combo-bar-width: min(100%, 100%);
-    --game-field-toy-size: clamp(96px, 27vw, 150px);
+    --game-field-toy-size: clamp(104px, 30vw, 148px);
     --game-side-toy-size: clamp(136px, 36vw, 182px);
-    --game-battle-toy-size: clamp(104px, 22vmin, 172px);
-    --game-battle-hp-width: clamp(74px, 12vmin, 98px);
-    --game-battle-hp-height: clamp(7px, 1.5vmin, 9px);
+    --game-battle-toy-size: clamp(58px, 13vh, 94px);
+    --game-battle-hp-width: clamp(46px, 10.5vh, 72px);
+    --game-battle-hp-height: clamp(5px, 0.9vh, 8px);
     --game-modal-grid-cols: 3;
     --game-modal-picker-hero: min(88px, 24vw);
     --game-hud-icon-size: 40px;
@@ -519,9 +517,16 @@
   }
 
   html body .playground .top-hud .game-hud-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    min-width: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
     min-height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
-    height: auto;
-    width: auto;
+    max-height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    padding: clamp(3px, 0.9vw, 5px);
+    box-sizing: border-box;
   }
 
   html body .playground .top-hud .game-coin-banner {
@@ -629,28 +634,17 @@
     max-width: 100%;
   }
 
-  html body .playground .game-attack-btn:not(.game-attack-btn--ad) {
-    --sword-icon-slot: clamp(38px, 10vw, 50px);
-    --sword-icon-gap: clamp(8px, 2vw, 10px);
-    --sword-text-half: clamp(32px, 8vw, 42px);
-  }
-
   html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__label {
     padding-left: clamp(12px, 3.2vw, 16px);
-    padding-right: clamp(12px, 3.2vw, 16px);
   }
 
   html body .playground .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
-    right: -20px;
-    left: auto;
-    top: -19%;
-    width: clamp(54px, 13.5vw, 90px);
-    height: clamp(54px, 13.5vw, 90px);
-    transform: rotate(-190deg);
+    width: clamp(38px, 9.5vw, 48px);
+    height: clamp(38px, 9.5vw, 48px);
   }
 
   html body .playground .game-attack-btn--cooldown .game-attack-btn__label {
-    font-size: clamp(15px, 4.2vw, 22px);
+    font-size: clamp(20px, 5.6vw, 28px);
   }
 
   html body .game-modal-overlay {
@@ -700,6 +694,11 @@
 
   html body .battle-screen__formation {
     column-gap: clamp(4px, 1.5vw, 10px);
+  }
+
+  html body .battle-screen .battle-fighter--player,
+  html body .battle-screen .battle-fighter--enemy {
+    align-items: center;
   }
 }
 
@@ -786,6 +785,13 @@
   }
 }
 
+/* Портрет (в т.ч. 1080×1920): прогресс рекламы не наезжает на кнопку «Напасть». */
+@media (orientation: portrait) {
+  html body .playground .playground__ad-milestone {
+    display: none;
+  }
+}
+
 /* ── Touch targets (только мобильные/планшеты) ───────────────── */
 @media (max-width: 1024px) {
   html body .playground .bottom-bar {
@@ -840,14 +846,27 @@
     display: block;
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
   }
 
+  html body .playground .top-hud .game-hud-menu-btn--gold .game-hud-menu-btn__icon {
+    display: block;
+  }
+
   html body .playground .top-hud .game-hud-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
     min-width: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
-    padding: 4px;
-    grid-template-columns: 1fr;
+    height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    min-height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    max-height: var(--game-hud-row-height, clamp(52px, 14vw, 64px));
+    padding: clamp(3px, 0.9vw, 5px);
+    box-sizing: border-box;
+    grid-template-columns: unset;
   }
 
   html body .playground .top-hud__audio .hud-audio__btn {
@@ -888,5 +907,143 @@
   html body .toy-acquire-overlay {
     align-items: center;
     padding: 8px;
+  }
+}
+
+/* ── Узкий мобильный (≤480px, iPhone ~390) ───────────────────── */
+@media (max-width: 480px) {
+  :root {
+    --game-hud-row-height: clamp(44px, 11.5vw, 52px);
+    --game-hud-icon-size: 36px;
+    --game-coin-banner-width: auto;
+    --game-attack-btn-width: clamp(108px, 32vw, 148px);
+    --game-side-card-stage-height: clamp(88px, 23vw, 112px);
+    --game-side-toy-size: clamp(100px, 26vw, 128px);
+  }
+
+  html body .playground .top-hud {
+    gap: 2px;
+    padding: 4px 4px 2px;
+    padding-top: calc(4px + env(safe-area-inset-top, 0px));
+  }
+
+  html body .playground .top-hud__main {
+    gap: 4px;
+    align-items: center;
+  }
+
+  html body .playground .top-hud__left {
+    gap: 4px;
+    min-height: var(--game-hud-row-height);
+  }
+
+  html body .playground .top-hud__right {
+    height: var(--game-hud-row-height);
+    min-height: var(--game-hud-row-height);
+    gap: 4px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  html body .playground .top-hud__audio {
+    display: none;
+  }
+
+  html body .playground .top-hud .game-hud-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--game-hud-row-height);
+    min-width: var(--game-hud-row-height);
+    height: var(--game-hud-row-height);
+    min-height: var(--game-hud-row-height);
+    max-height: var(--game-hud-row-height);
+    padding: clamp(3px, 0.9vw, 5px);
+    box-sizing: border-box;
+  }
+
+  html body .playground .top-hud .game-coin-banner {
+    height: var(--game-hud-row-height);
+    min-height: var(--game-hud-row-height);
+    padding: 2px 6px 2px 8px;
+  }
+
+  html body .playground .top-hud .game-coin-banner__value {
+    font-size: clamp(14px, 3.8vw, 18px);
+  }
+
+  html body .playground .top-hud .game-coin-banner__icon {
+    width: clamp(22px, 6vw, 28px);
+    height: clamp(22px, 6vw, 28px);
+  }
+
+  html body .playground .top-hud__combo-row {
+    padding-left: 0;
+  }
+
+  html body .playground .top-hud__combo-circle {
+    width: clamp(48px, 12.5vw, 58px);
+    height: clamp(48px, 12.5vw, 58px);
+  }
+
+  html body .playground .top-hud__combo-circle .combo-circle__label {
+    font-size: clamp(22px, 6vw, 30px);
+  }
+
+  html body .playground .bottom-bar {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px;
+    padding: 0 6px;
+  }
+
+  html body .playground .bottom-bar__left {
+    display: flex;
+    grid-column: 1;
+    justify-self: start;
+    --game-hud-audio-icon-size: 28px;
+    --game-hud-audio-gap: 6px;
+  }
+
+  html body .playground .bottom-bar__actions {
+    grid-column: 2;
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  html body .playground .bottom-bar__attack-wrap:not(.bottom-bar__attack-wrap--cooldown-ad) {
+    width: 100%;
+  }
+
+  html body .battle-screen__arena {
+    gap: 0;
+    align-items: stretch;
+    padding:
+      calc(4px + env(safe-area-inset-top, 0px))
+      2px
+      calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  html body .battle-screen__team {
+    align-self: stretch;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  html body .battle-screen__formation {
+    column-gap: clamp(2px, 1vw, 6px);
+  }
+
+  html body .battle-screen .battle-fighter {
+    gap: 2px;
+  }
+
+  html body .battle-screen .battle-fighter--player,
+  html body .battle-screen .battle-fighter--enemy {
+    align-items: center;
+  }
+
+  html body .battle-screen__bg {
+    background-position: center 52%;
   }
 }

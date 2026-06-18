@@ -6,7 +6,7 @@ import {
   pauseAdAudio,
   resumeAdAudio,
   setAdBreakBlocking,
-  showInterstitialThenWithResult,
+  shouldSuppressAdUnavailableAfterMiss,
   showScheduledGameplayInterstitialThen,
 } from '@/ads/ads'
 import { AD_BREAK_COUNTDOWN_SEC, SCHEDULED_AD_INTERVAL_MS } from '@/domain/constants'
@@ -92,16 +92,12 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     setAdBreakBlocking(false)
 
     const onAdDone = (shown: boolean): void => {
-      if (!shown) {
-        adUnavailable.value = true
+      if (shown || shouldSuppressAdUnavailableAfterMiss()) {
+        completeBreakCycle()
         return
       }
-      completeBreakCycle()
-    }
 
-    if (import.meta.env.DEV) {
-      showInterstitialThenWithResult(onAdDone, 'scheduled_gameplay', { forceAttempt: true })
-      return
+      adUnavailable.value = true
     }
 
     showScheduledGameplayInterstitialThen(onAdDone)
@@ -176,8 +172,34 @@ export function useScheduledAdBreak(active: Ref<boolean>) {
     }
   }
 
+  function suspendBreakForOverlay(): void {
+    let deferred = false
+
+    if (countdown.value !== null) {
+      clearCountdownTimer()
+      countdown.value = null
+      setAdBreakBlocking(false)
+      resumeGameplayAfterCountdown()
+      deferred = true
+    }
+
+    if (interstitialWaitTimer !== null) {
+      clearInterstitialWaitTimer()
+      deferred = true
+    }
+
+    if (deferred) {
+      pendingBreak = true
+    }
+  }
+
   watch(active, (isActive) => {
-    if (isActive && pendingBreak) {
+    if (!isActive) {
+      suspendBreakForOverlay()
+      return
+    }
+
+    if (pendingBreak) {
       tryTriggerBreak()
     }
   })

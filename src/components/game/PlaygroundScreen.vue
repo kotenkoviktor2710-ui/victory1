@@ -43,7 +43,18 @@ const {
 const isBattleLoading = computed(() => pvp.isPreparingBattle.value)
 const inboundAttack = computed(() => inbound.pendingInbound.value)
 const isBattleActive = computed(() => battleSnapshot.value !== null)
-const scheduledAdActive = computed(() => !isBattleActive.value)
+const isRewardModalOpen = computed(() => rewardSnapshot.value !== null)
+const isToyAcquireOpen = computed(() => game.activeToyCelebration !== null)
+const scheduledAdActive = computed(
+  () =>
+    !isBattleActive.value &&
+    !isBattleLoading.value &&
+    !showCollection.value &&
+    !showPvp.value &&
+    inboundAttack.value === null &&
+    !isRewardModalOpen.value &&
+    !isToyAcquireOpen.value,
+)
 const {
   countdown: adBreakCountdown,
   adUnavailable,
@@ -125,7 +136,6 @@ function onRewardClaimed(amount: number): void {
 
 onMounted(() => {
   void game.syncPvpDefense()
-  void inbound.checkInboundAttack()
 })
 </script>
 
@@ -181,7 +191,10 @@ onMounted(() => {
       @claim="onRewardClaimed"
     />
     <ToyAcquireModal />
-    <AdBreakModal v-if="adBreakCountdown !== null" :seconds-left="adBreakCountdown" />
+    <AdBreakModal
+      v-if="scheduledAdActive && adBreakCountdown !== null"
+      :seconds-left="adBreakCountdown"
+    />
     <AdUnavailableModal v-if="adUnavailable" @close="dismissAdUnavailable" />
   </div>
 </template>

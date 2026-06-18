@@ -46,7 +46,9 @@
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  transition: transform 0.1s ease, opacity 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    opacity 0.15s ease;
 }
 
 .game-hud-icon-btn:active:not(:disabled) {
@@ -273,10 +275,11 @@
 .game-attack-btn__label {
   position: relative;
   z-index: 1;
-  width: 100%;
+  flex: 0 1 auto;
+  width: auto;
   min-width: 0;
   box-sizing: border-box;
-  padding-inline: clamp(30px, 7.5vw, 42px);
+  padding-inline: clamp(12px, 3vw, 16px);
   text-align: center;
   font-size: clamp(18px, 4.8vw, 26px);
   font-weight: 900;
@@ -287,7 +290,6 @@
 .game-attack-btn--cooldown .game-attack-btn__label {
   font-size: clamp(20px, 5.4vw, 30px);
   letter-spacing: 0.06em;
-  padding-inline: clamp(34px, 8.5vw, 46px);
 }
 
 .game-attack-btn--cooldown:not(.game-attack-btn--ad) {
@@ -308,15 +310,24 @@
 }
 
 .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__label {
-  padding-inline: clamp(34px, 8.5vw, 46px);
+  padding-inline: 0;
+  padding-left: clamp(10px, 2.5vw, 16px);
+}
+
+.game-attack-btn__content {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2px, 0.5vw, 6px);
+  max-width: 100%;
 }
 
 .game-attack-btn__icon {
-  position: absolute;
-  right: clamp(6px, 1.6vw, 10px);
-  top: -19%;
+  position: relative;
   z-index: 2;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   width: clamp(34px, 8.5vw, 48px);
@@ -326,9 +337,10 @@
 }
 
 .game-attack-btn:not(.game-attack-btn--ad) .game-attack-btn__icon {
-  right: -20px;
-  width: clamp(54px, 13.5vw, 90px);
-  height: clamp(54px, 13.5vw, 90px);
+  width: clamp(36px, 9vw, 50px);
+  height: clamp(36px, 9vw, 50px);
+  margin-top: -0.35em;
+  margin-right: clamp(4px, 1vw, 8px);
   transform: rotate(-190deg);
 }
 
@@ -344,23 +356,22 @@
 }
 
 .game-attack-btn--ad {
+  gap: clamp(4px, 1vw, 8px);
   background: linear-gradient(180deg, #5eb8f0 0%, #2d8fd4 48%, #1a6fad 100%);
-  --ad-icon-slot: clamp(34px, 8.5vw, 44px);
-  --ad-icon-gap: clamp(10px, 2.5vw, 14px);
 }
 
 .game-attack-btn--ad .game-attack-btn__label {
   font-size: clamp(14px, 3.6vw, 20px);
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  padding-left: clamp(12px, 3vw, 16px);
-  padding-right: calc(var(--ad-icon-slot) + var(--ad-icon-gap));
+  padding-inline: 0;
+  padding-left: clamp(10px, 2.5vw, 14px);
 }
 
 .game-attack-btn--ad .game-attack-btn__icon {
-  right: clamp(6px, 1.5vw, 10px);
-  width: var(--ad-icon-slot);
-  height: clamp(30px, 7.5vw, 40px);
+  width: clamp(28px, 7vw, 36px);
+  height: clamp(28px, 7vw, 36px);
+  margin-right: clamp(6px, 1.5vw, 10px);
 }
 
 .game-attack-btn__ad-icon {
@@ -375,9 +386,7 @@
 }
 
 .game-toy-outline {
-  filter:
-    drop-shadow(0 0 2px #fff)
-    drop-shadow(0 0 4px #fff)
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #fff)
     drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
 }
 
@@ -444,15 +453,7 @@
   right: 0;
   padding-left: 10px;
   padding-right: 12px;
-  clip-path: polygon(
-    8px 0%,
-    100% 0%,
-    100% 100%,
-    0% 100%,
-    0% 38%,
-    6px 24%,
-    2px 12%
-  );
+  clip-path: polygon(8px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 38%, 6px 24%, 2px 12%);
 }
 
 .game-side-card__ribbon--ad {
@@ -544,8 +545,7 @@
   height: clamp(36px, 9.2vw, 48px);
   border: 2px solid var(--game-blue-deep);
   border-radius: 4px;
-  background:
-    linear-gradient(180deg, #0a1a30 0%, #143052 42%, #0d2644 100%);
+  background: linear-gradient(180deg, #0a1a30 0%, #143052 42%, #0d2644 100%);
   box-shadow:
     inset 0 3px 8px rgba(0, 0, 0, 0.55),
     inset 0 -1px 0 rgba(255, 255, 255, 0.1);
@@ -620,9 +620,27 @@
   inset: 0;
   padding: clamp(5px, 1.4vw, 7px);
   background:
-    linear-gradient(128deg, transparent 44%, rgba(17, 17, 17, 0.55) 44%, rgba(17, 17, 17, 0.55) 46%, transparent 46%),
-    linear-gradient(52deg, transparent 58%, rgba(17, 17, 17, 0.45) 58%, rgba(17, 17, 17, 0.45) 60%, transparent 60%),
-    linear-gradient(168deg, transparent 72%, rgba(17, 17, 17, 0.4) 72%, rgba(17, 17, 17, 0.4) 74%, transparent 74%);
+    linear-gradient(
+      128deg,
+      transparent 44%,
+      rgba(17, 17, 17, 0.55) 44%,
+      rgba(17, 17, 17, 0.55) 46%,
+      transparent 46%
+    ),
+    linear-gradient(
+      52deg,
+      transparent 58%,
+      rgba(17, 17, 17, 0.45) 58%,
+      rgba(17, 17, 17, 0.45) 60%,
+      transparent 60%
+    ),
+    linear-gradient(
+      168deg,
+      transparent 72%,
+      rgba(17, 17, 17, 0.4) 72%,
+      rgba(17, 17, 17, 0.4) 74%,
+      transparent 74%
+    );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -948,7 +966,9 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  transition: transform 0.08s ease, opacity 0.15s ease;
+  transition:
+    transform 0.08s ease,
+    opacity 0.15s ease;
 }
 
 .game-modal-picker__item:active:not(:disabled) {
@@ -961,9 +981,7 @@
 }
 
 .game-modal-picker__item--selected .game-modal-picker__hero {
-  filter:
-    drop-shadow(0 0 2px #fff)
-    drop-shadow(0 0 8px rgba(255, 229, 102, 0.75));
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 8px rgba(255, 229, 102, 0.75));
 }
 
 .game-modal-picker__hero {

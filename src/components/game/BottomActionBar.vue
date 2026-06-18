@@ -37,11 +37,13 @@ const { t } = useI18n()
           :aria-live="canAttack ? undefined : 'polite'"
           @click="emit('attack')"
         >
-          <span class="game-attack-btn__label game-text-stroke">
-            {{ canAttack ? t('hud.attack') : cooldownLabel }}
-          </span>
-          <span class="game-attack-btn__icon" aria-hidden="true">
-            <img class="game-attack-btn__sword" src="/images/sword.png" alt="" />
+          <span class="game-attack-btn__content">
+            <span class="game-attack-btn__label game-text-stroke">
+              {{ canAttack ? t('hud.attack') : cooldownLabel }}
+            </span>
+            <span v-if="!showCooldownAd" class="game-attack-btn__icon" aria-hidden="true">
+              <img class="game-attack-btn__sword" src="/images/sword.png" alt="" />
+            </span>
           </span>
         </button>
 
@@ -52,9 +54,11 @@ const { t } = useI18n()
           :aria-label="t('hud.skipCooldownAria')"
           @click="emit('skip-cooldown')"
         >
-          <span class="game-attack-btn__label game-text-stroke">{{ t('hud.dontWait') }}</span>
-          <span class="game-attack-btn__icon" aria-hidden="true">
-            <img class="game-attack-btn__ad-icon" src="/images/ads.png" alt="" />
+          <span class="game-attack-btn__content">
+            <span class="game-attack-btn__label game-text-stroke">{{ t('hud.dontWait') }}</span>
+            <span class="game-attack-btn__icon" aria-hidden="true">
+              <img class="game-attack-btn__ad-icon" src="/images/ads.png" alt="" />
+            </span>
           </span>
         </button>
       </div>

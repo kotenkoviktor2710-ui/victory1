@@ -553,4 +553,96 @@ onMounted(() => {
     transform: translate(-50%, -50%) rotate(var(--projectile-angle)) scale(1.05);
   }
 }
+
+@media (max-width: 767px) and (orientation: portrait) {
+  .battle-screen__bg {
+    background-position: center 46%;
+  }
+
+  .battle-screen__arena {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: clamp(10px, 2.5vh, 24px);
+    padding:
+      calc(10px + env(safe-area-inset-top, 0px))
+      clamp(4px, 1.5vw, 10px)
+      calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .battle-screen__team {
+    width: 100%;
+    flex: 0 0 auto;
+    justify-content: center;
+  }
+
+  .battle-screen__team--enemy {
+    order: 1;
+    align-items: flex-start;
+  }
+
+  .battle-screen__team--player {
+    order: 2;
+    align-items: flex-end;
+  }
+
+  .battle-screen__formation {
+    grid-template-columns: repeat(6, minmax(0, auto));
+    grid-template-rows: auto auto;
+    justify-content: center;
+    column-gap: clamp(1px, 0.6vw, 4px);
+    row-gap: clamp(2px, 0.5vh, 5px);
+  }
+
+  .battle-screen__team--player .battle-screen__formation-slot--main-1 {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+
+  .battle-screen__team--player .battle-screen__formation-slot--main-2 {
+    grid-column: 3 / 5;
+    grid-row: 1;
+  }
+
+  .battle-screen__team--player .battle-screen__formation-slot--main-3 {
+    grid-column: 5 / 7;
+    grid-row: 1;
+  }
+
+  .battle-screen__team--player .battle-screen__formation-slot--between-1 {
+    grid-column: 2 / 4;
+    grid-row: 2;
+  }
+
+  .battle-screen__team--player .battle-screen__formation-slot--between-2 {
+    grid-column: 4 / 6;
+    grid-row: 2;
+  }
+
+  .battle-screen__team--enemy .battle-screen__formation-slot--main-1 {
+    grid-column: 1 / 3;
+    grid-row: 2;
+  }
+
+  .battle-screen__team--enemy .battle-screen__formation-slot--main-2 {
+    grid-column: 3 / 5;
+    grid-row: 2;
+  }
+
+  .battle-screen__team--enemy .battle-screen__formation-slot--main-3 {
+    grid-column: 5 / 7;
+    grid-row: 2;
+  }
+
+  .battle-screen__team--enemy .battle-screen__formation-slot--between-1 {
+    grid-column: 2 / 4;
+    grid-row: 1;
+  }
+
+  .battle-screen__team--enemy .battle-screen__formation-slot--between-2 {
+    grid-column: 4 / 6;
+    grid-row: 1;
+  }
+}
 </style>

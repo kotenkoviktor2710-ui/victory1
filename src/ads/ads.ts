@@ -392,6 +392,13 @@ export function showScheduledGameplayInterstitialThen(onDone: (shown: boolean) =
   attempt()
 }
 
+/** Не показывать «реклама недоступна» сразу после другого показа (rewarded/interstitial). */
+export function shouldSuppressAdUnavailableAfterMiss(): boolean {
+  if (msUntilInterstitialReady({ scheduled: true }) > 0) return true
+  if (msSinceLastAd() < INTERSTITIAL_MIN_GAP) return true
+  return false
+}
+
 /** Interstitial с результатом: была ли реклама реально показана. */
 export function showInterstitialThenWithResult(
   onDone: (shown: boolean) => void,
